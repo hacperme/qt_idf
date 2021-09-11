@@ -6,7 +6,7 @@ set(qt_idf_sources
     main.c
    )
 
-set(OBJS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
+set(OBJS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/output)
 
 get_filename_component(EXTERNAL_DIR "external" REALPATH)
 add_subdirectory(${EXTERNAL_DIR}/iotkit-embedded iotkit_sdk)
@@ -15,7 +15,7 @@ add_subdirectory(${EXTERNAL_DIR}/cJSON cJSON)
 add_subdirectory(${EXTERNAL_DIR}/mbedtls mbedtls)
 
 set (LIBRARY_OUTPUT_PATH ${OBJS_PATH}/libs)
-set (EXECUTABLE_OUTPUT_PATH ${OBJS_PATH}/exc)
+set (EXECUTABLE_OUTPUT_PATH ${OBJS_PATH}/bin)
 
 add_executable(qt_idf ${qt_idf_sources})
 
