@@ -16,3 +16,11 @@ endif()
 if(CONFIG_LVGL_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lvgl lvgl)
 endif()
+
+if(CONFIG_SDL2_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/SDL2 SDL2)
+endif()
+
+if(CONFIG_LV_DRIVERS_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/lv_drivers lv_drivers)
+endif()

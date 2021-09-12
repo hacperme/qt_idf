@@ -16,10 +16,14 @@
 /* SDL2 */
 #cmakedefine CONFIG_SDL2_ENABLE
 
+/* lv_drivers */
+#cmakedefine CONFIG_LV_DRIVERS_ENABLE
+
 /* examples */
 #cmakedefine CONFIG_BUILD_EXAMPLES_ENABLE
 #ifdef CONFIG_BUILD_EXAMPLES_ENABLE
 #cmakedefine CONFIG_BUILD_LINKIT_EXAMPLES_ENABLE
+#cmakedefine CONFIG_BUILD_LVGL_EXAMPLES_ENABLE
 #endif // CONFIG_BUILD_EXAMPLES_ENABLE
 
 // #cmakedefine FOO_ENABLE

@@ -1,4 +1,4 @@
-project(cJSON LANGUAGES C)
+project(lvgl LANGUAGES C)
 
 file(GLOB_RECURSE SOURCES src/*.c)
 add_library(lvgl STATIC ${SOURCES})
