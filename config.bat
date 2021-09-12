@@ -23,14 +23,17 @@ if not exist %CONFIG_FILE% (
 if not exist %cur_dir%%build_dir% (md %cur_dir%%build_dir%)
 
 
-
 cd %cur_dir%%build_dir%
 
 if exist %cur_dir%%build_dir%CMakeCache.txt (del CMakeCache.txt)
 
+
 cmake -G "MinGW Makefiles" -DCMAKE_TOOLCHAIN_FILE=%CONFIG_FILE% .. -Wdev
 
-:BYEBYE
+if %errorlevel% neq 0 (
+  echo "errors occurred....."
+  cd ../
+	goto BYEBYE
+)
 
-rem pushd .
-rem popd
+:BYEBYE

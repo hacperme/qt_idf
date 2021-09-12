@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
+if(CONFIG_CJSON_ENABLE)
 project(cJSON LANGUAGES C)
 
     set(cJSON_sources
@@ -8,3 +9,4 @@ project(cJSON LANGUAGES C)
        )
 
 add_library(cJSON STATIC ${cJSON_sources})
+endif()
