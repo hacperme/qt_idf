@@ -13,6 +13,8 @@
 /* lvgl */
 #cmakedefine CONFIG_LVGL_ENABLE
 
+/* SDL2 */
+#cmakedefine CONFIG_SDL2_ENABLE
 
 /* examples */
 #cmakedefine CONFIG_BUILD_EXAMPLES_ENABLE
