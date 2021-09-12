@@ -1,17 +1,16 @@
 name: qt_idf CI
-on: push
-  branches:
-    - [master, test]
+on: 
+  push:
+    branches: 
+      - master
+
 jobs:
   build_job:
     name: build job
     runs-on: windows-latest
+
     steps:
+    - uses: actions/checkout@v2
     - name: run cmd
-      run: cmd.exe
-    - name: setup env
-      run: env.bat
-    - name: config
-      rum: config.bat
-    - name: build
-      run: make
+      run: env.bat && config.bat && make
+      shell: cmd
