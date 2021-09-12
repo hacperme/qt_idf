@@ -10,6 +10,8 @@
 /* iotkit-embedded */
 #cmakedefine CONFIG_IOTKIT_ENABLE
 
+/* lvgl */
+#cmakedefine CONFIG_LVGL_ENABLE
 
 
 /* examples */
