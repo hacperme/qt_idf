@@ -36,3 +36,7 @@ endif()
 if(CONFIG_LV_LIB_PNG_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_lib_png lv_lib_png)
 endif()
+
+if(CONFIG_LV_LIB_PNG_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/lv_lib_qrcode lv_lib_qrcode)
+endif()

@@ -28,6 +28,9 @@
 /* lv_lib_png */
 #cmakedefine CONFIG_LV_LIB_PNG_ENABLE
 
+/* lv_lib_qrcode */
+#cmakedefine CONFIG_LV_LIB_QRCODE_ENABLE
+
 /* examples */
 #cmakedefine CONFIG_BUILD_EXAMPLES_ENABLE
 #ifdef CONFIG_BUILD_EXAMPLES_ENABLE
