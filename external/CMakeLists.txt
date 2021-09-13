@@ -24,3 +24,8 @@ endif()
 if(CONFIG_LV_DRIVERS_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_drivers lv_drivers)
 endif()
+
+if(CONFIG_LV_FS_IF_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/lv_fs_if lv_fs_if)
+endif()
+

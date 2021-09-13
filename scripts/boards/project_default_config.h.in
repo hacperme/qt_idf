@@ -19,6 +19,9 @@
 /* lv_drivers */
 #cmakedefine CONFIG_LV_DRIVERS_ENABLE
 
+/* lv_fs_if */
+#cmakedefine CONFIG_LV_FS_IF_ENABLE
+
 /* examples */
 #cmakedefine CONFIG_BUILD_EXAMPLES_ENABLE
 #ifdef CONFIG_BUILD_EXAMPLES_ENABLE

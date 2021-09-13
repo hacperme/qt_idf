@@ -30,7 +30,7 @@
 #endif
 
 #if LV_USE_FS_IF
-// #include "lv_fs_if/lv_fs_if.h"
+#include "lv_fs_if/lv_fs_if.h"
 #endif
 
 /*********************
@@ -243,7 +243,7 @@ static void hal_init(void)
 #endif
 
 #if LV_USE_FS_IF
-    // lv_fs_if_init();
+    lv_fs_if_init();
 #endif
 
     /*Add the mousewheel as input device.*/
