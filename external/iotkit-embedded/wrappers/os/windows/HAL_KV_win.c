@@ -2,7 +2,7 @@
  * Copyright (C) 2015-2019 Alibaba Group Holding Limited
  */
 
-#include "infra_config.h"
+
 
 #if defined(HAL_KV)
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include "infra_defs.h"
-
+#include "infra_config.h"
 
 #define  HAL_DEBUG_OUT 1
 /*The content of the file can't get lost after reboot, please ensure the file is not stored on a RAM file system*/
