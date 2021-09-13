@@ -18,8 +18,8 @@
 #include "lv_drivers/indev/mouse.h"
 #include "lv_drivers/indev/keyboard.h"
 #include "lv_drivers/indev/mousewheel.h"
-// #include "lv_examples/lv_examples.h"
-// #include "lv_demo/lv_demo.h"
+
+#include "lv_demo.h"
 
 #if USE_LV_IMG_JPEG_DECODER
 #include "lv_img_jpeg_decoder.h"
@@ -114,39 +114,6 @@ static int lv_gui_main_thread(void *data)
     return 0;
 }
 
-static void event_handler(lv_obj_t * obj, lv_event_t event)
-{
-    if(event == LV_EVENT_CLICKED) {
-        printf("Clicked\n");
-    }
-    else if(event == LV_EVENT_VALUE_CHANGED) {
-        printf("Toggled\n");
-    }
-}
-
-
-void lv_ex_btn_1(void)
-{
-    lv_obj_t * label;
-
-    lv_obj_t * btn1 = lv_btn_create(lv_scr_act(), NULL);
-    lv_obj_set_event_cb(btn1, event_handler);
-    lv_obj_align(btn1, NULL, LV_ALIGN_CENTER, 0, -40);
-
-    label = lv_label_create(btn1, NULL);
-    lv_label_set_text(label, "Button");
-
-    lv_obj_t * btn2 = lv_btn_create(lv_scr_act(), NULL);
-    lv_obj_set_event_cb(btn2, event_handler);
-    lv_obj_align(btn2, NULL, LV_ALIGN_CENTER, 0, 40);
-    lv_btn_set_checkable(btn2, true);
-    lv_btn_toggle(btn2);
-    lv_btn_set_fit2(btn2, LV_FIT_NONE, LV_FIT_TIGHT);
-
-    label = lv_label_create(btn2, NULL);
-    lv_label_set_text(label, "Toggled");
-}
-
 static void lv_demo_task(lv_task_t *param)
 {
     (void)param; /*Unused*/
@@ -157,44 +124,10 @@ static void lv_demo_task(lv_task_t *param)
      * Uncomment any one (and only one) of the functions below to run that
      * item.
      */
-    lv_ex_btn_1();
-    //    extern void examlpe_jpg_img_decode(void);
-    //    examlpe_jpg_img_decode();
-    //    lv_demo_img_png();
-    //    lv_demo_img_jpg();
-    // lv_demo_qrcode();
 
-    //    lv_demo_widgets();
-    //    lv_demo_benchmark();
-    //    lv_demo_keypad_encoder();
-    //    lv_demo_printer();
-    //    lv_demo_stress();
-    //    lv_ex_get_started_1();
-    //    lv_ex_get_started_2();
-    //    lv_ex_get_started_3();
-
-    //    lv_ex_style_1();
-    //    lv_ex_style_2();
-    //    lv_ex_style_3();
-    //    lv_ex_style_4();
-    //    lv_ex_style_5();
-    //    lv_ex_style_6();
-    //    lv_ex_style_7();
-    //    lv_ex_style_8();
-    //    lv_ex_style_9();
-    //    lv_ex_style_10();
-    //    lv_ex_style_11();
-
-    /*
-     * There are many examples of individual widgets found under the
-     * lv_examples/src/lv_ex_widgets directory.  Here are a few sample test
-     * functions.  Look in that directory to find all the rest.
-     */
-    //    lv_ex_arc_1();
-    //    lv_ex_cpicker_1();
-    //    lv_ex_gauge_1();
-    //    lv_ex_img_1();
-    //    lv_ex_tileview_1();
+    // lv_demo_img_png();
+    // lv_demo_img_jpg();
+    lv_demo_qrcode();
 }
 
 /**

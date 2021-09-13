@@ -20,7 +20,7 @@ add_library(libqrcode STATIC ${libqrcode_src})
 target_compile_definitions(libqrcode PUBLIC "-DHAVE_CONFIG_H=1")
 
 add_library(lv_qrcode STATIC ${lv_qrcode_src})
-target_link_libraries(lv_qrcode PRIVATE libqrcode)
+target_link_libraries(lv_qrcode PRIVATE libqrcode lvgl)
 
 target_include_directories(lv_qrcode PUBLIC
     ${EXTERNAL_DIR}/

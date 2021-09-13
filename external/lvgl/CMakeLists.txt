@@ -18,6 +18,10 @@ if(CONFIG_LV_LIB_JPG_ENABLE)
     target_link_libraries(lvgl  lv_lib_jpg)
 endif()
 
-if(CONFIG_LV_LIB_JPG_ENABLE)
+if(CONFIG_LV_LIB_PNG_ENABLE)
     target_link_libraries(lvgl  lv_lib_png)
+endif()
+
+if(CONFIG_LV_LIB_QRCODE_ENABLE)
+    target_link_libraries(lvgl  lv_qrcode)
 endif()
