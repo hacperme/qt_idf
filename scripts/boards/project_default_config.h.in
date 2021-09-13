@@ -10,12 +10,32 @@
 /* iotkit-embedded */
 #cmakedefine CONFIG_IOTKIT_ENABLE
 
+/* lvgl */
+#cmakedefine CONFIG_LVGL_ENABLE
 
+/* SDL2 */
+#cmakedefine CONFIG_SDL2_ENABLE
+
+/* lv_drivers */
+#cmakedefine CONFIG_LV_DRIVERS_ENABLE
+
+/* lv_fs_if */
+#cmakedefine CONFIG_LV_FS_IF_ENABLE
+
+/* lv_lib_jpg */
+#cmakedefine CONFIG_LV_LIB_JPG_ENABLE
+
+/* lv_lib_png */
+#cmakedefine CONFIG_LV_LIB_PNG_ENABLE
+
+/* lv_lib_qrcode */
+#cmakedefine CONFIG_LV_LIB_QRCODE_ENABLE
 
 /* examples */
 #cmakedefine CONFIG_BUILD_EXAMPLES_ENABLE
 #ifdef CONFIG_BUILD_EXAMPLES_ENABLE
 #cmakedefine CONFIG_BUILD_LINKIT_EXAMPLES_ENABLE
+#cmakedefine CONFIG_BUILD_LVGL_EXAMPLES_ENABLE
 #endif // CONFIG_BUILD_EXAMPLES_ENABLE
 
 // #cmakedefine FOO_ENABLE

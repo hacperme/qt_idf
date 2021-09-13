@@ -5,7 +5,7 @@ project(linkit_example_solo LANGUAGES C)
 
 add_executable(linkit_example_solo example_iotkit_solo.c)
 
-target_link_libraries(linkit_example_solo iotkit_sdk)
+target_link_libraries(linkit_example_solo PRIVATE iotkit_sdk)
 
 target_include_directories(linkit_example_solo PRIVATE
     ${EXTERNAL_DIR}/iotkit-embedded/src/infra
