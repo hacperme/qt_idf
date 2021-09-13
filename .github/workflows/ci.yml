@@ -1,8 +1,6 @@
-name: qt_idf CI
+name: CI
 on: 
   push:
-    branches: 
-      - master
 
 jobs:
   build_job:
@@ -12,5 +10,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: run cmd
-      run: env.bat && config.bat && make
+      run: env.bat && config.bat && make -j32
       shell: cmd
