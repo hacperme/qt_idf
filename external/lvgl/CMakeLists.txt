@@ -10,6 +10,10 @@ if(CONFIG_LV_DRIVERS_ENABLE)
     target_link_libraries(lvgl  lv_drivers)
 endif()
 
-if(CONFIG_LV_DRIVERS_ENABLE)
+if(CONFIG_LV_FS_IF_ENABLE)
     target_link_libraries(lvgl  lv_fs_if)
+endif()
+
+if(CONFIG_LV_LIB_JPG_ENABLE)
+    target_link_libraries(lvgl  lv_lib_jpg)
 endif()

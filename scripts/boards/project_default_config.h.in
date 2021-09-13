@@ -22,6 +22,9 @@
 /* lv_fs_if */
 #cmakedefine CONFIG_LV_FS_IF_ENABLE
 
+/* lv_lib_jpg */
+#cmakedefine CONFIG_LV_LIB_JPG_ENABLE
+
 /* examples */
 #cmakedefine CONFIG_BUILD_EXAMPLES_ENABLE
 #ifdef CONFIG_BUILD_EXAMPLES_ENABLE

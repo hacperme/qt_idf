@@ -29,3 +29,6 @@ if(CONFIG_LV_FS_IF_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_fs_if lv_fs_if)
 endif()
 
+if(CONFIG_LV_LIB_JPG_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/lv_lib_jpg lv_lib_jpg)
+endif()

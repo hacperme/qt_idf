@@ -22,7 +22,7 @@
 // #include "lv_demo/lv_demo.h"
 
 #if USE_LV_IMG_JPEG_DECODER
-// #include "lv_img_jpeg_decoder.h"
+#include "lv_img_jpeg_decoder.h"
 #endif
 
 #if USE_LV_IMG_PNG_DECODER
@@ -254,7 +254,7 @@ static void hal_init(void)
     lv_indev_drv_register(&enc_drv);
 
 #if USE_LV_IMG_JPEG_DECODER
-    // lv_jpeg_decoder_init();
+    lv_jpeg_decoder_init();
 #endif
 
 #if USE_LV_IMG_PNG_DECODER
