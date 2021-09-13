@@ -26,7 +26,7 @@
 #endif
 
 #if USE_LV_IMG_PNG_DECODER
-// #include "lv_img_png_decoder.h"
+#include "lv_img_png_decoder.h"
 #endif
 
 #if LV_USE_FS_IF
@@ -258,7 +258,7 @@ static void hal_init(void)
 #endif
 
 #if USE_LV_IMG_PNG_DECODER
-    // lv_png_decoder_init();
+    lv_png_decoder_init();
 #endif
 
     /* Optional:

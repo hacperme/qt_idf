@@ -17,3 +17,7 @@ endif()
 if(CONFIG_LV_LIB_JPG_ENABLE)
     target_link_libraries(lvgl  lv_lib_jpg)
 endif()
+
+if(CONFIG_LV_LIB_JPG_ENABLE)
+    target_link_libraries(lvgl  lv_lib_png)
+endif()

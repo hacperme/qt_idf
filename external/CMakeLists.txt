@@ -32,3 +32,7 @@ endif()
 if(CONFIG_LV_LIB_JPG_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_lib_jpg lv_lib_jpg)
 endif()
+
+if(CONFIG_LV_LIB_PNG_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/lv_lib_png lv_lib_png)
+endif()
