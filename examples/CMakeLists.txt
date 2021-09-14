@@ -7,4 +7,8 @@ if(CONFIG_BUILD_EXAMPLES_ENABLE)
     if(CONFIG_BUILD_LVGL_EXAMPLES_ENABLE)
     add_subdirectory(lvgl_examples lvgl_examples)
     endif()
+
+    if(CONFIG_BUILD_LIBWEBSOCKET_EXAMPLES_ENABLE)
+    add_subdirectory(libwebsocket_examples libwebsocket_examples)
+    endif()
 endif()
