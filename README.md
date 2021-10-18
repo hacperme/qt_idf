@@ -44,7 +44,7 @@ make clean
 
 
 
-![xxx](https://cdn.jsdelivr.net/gh/hacperme/picx_hosting@master/20210507/xxx.1hxtou77tv1c.gif)
+![xxx](https://raw.githubusercontent.com/hacperme/picx_hosting/master/20210507/xxx.1hxtou77tv1c.gif)
 
 
 
