@@ -138,7 +138,7 @@
 //#define MBEDTLS_CAMELLIA_C
 //#define MBEDTLS_ARIA_C
 //#define MBEDTLS_CCM_C
-//#define MBEDTLS_CERTS_C
+#define MBEDTLS_CERTS_C
 //#define MBEDTLS_CHACHA20_C
 //#define MBEDTLS_CHACHAPOLY_C
 #define MBEDTLS_CIPHER_C          // 启用通用密码层
