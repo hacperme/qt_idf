@@ -37,6 +37,10 @@ if(CONFIG_LV_LIB_PNG_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_lib_png lv_lib_png)
 endif()
 
-if(CONFIG_LV_LIB_PNG_ENABLE)
+if(CONFIG_LV_LIB_QRCODE_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_lib_qrcode lv_lib_qrcode)
+endif()
+
+if(CONFIG_LIBWEBSOCKET_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/libwebsocket libwebsocket)
 endif()
