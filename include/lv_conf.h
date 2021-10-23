@@ -197,6 +197,12 @@ typedef void * lv_fs_drv_user_data_t;
 #define LV_QRCODE_PIX_WIDTH 1
 #endif
 
+/*1: Enable barcode */
+#define USE_LV_BARCODE 1
+#if USE_LV_BARCODE
+#define LV_BARCODE_PIX_WIDTH 1
+#endif
+
 /*1: Enable jpg image decoder */
 #define USE_LV_IMG_JPEG_DECODER 1
 /*1: Enable png image decoder */

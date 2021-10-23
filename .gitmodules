@@ -1,0 +1,3 @@
+[submodule "external/lv_lib_barcode/code128"]
+	path = external/lv_lib_barcode/code128
+	url = https://github.com/fhunleth/code128.git

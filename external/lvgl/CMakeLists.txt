@@ -25,3 +25,7 @@ endif()
 if(CONFIG_LV_LIB_QRCODE_ENABLE)
     target_link_libraries(lvgl  lv_qrcode)
 endif()
+
+if(CONFIG_LV_LIB_BARCODE_ENABLE)
+    target_link_libraries(lvgl  lv_lib_barcode)
+endif()
