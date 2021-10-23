@@ -44,3 +44,7 @@ endif()
 if(CONFIG_LIBWEBSOCKET_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/libwebsocket libwebsocket)
 endif()
+
+if(CONFIG_LV_LIB_BARCODE_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/lv_lib_barcode code128)
+endif()
