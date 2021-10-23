@@ -1,6 +1,6 @@
 ## qt_idf 介绍
 
-![CI][https://github.com/hacperme/qt_idf/actions/workflows/ci.yml/badge.svg)]
+![CI](https://github.com/hacperme/qt_idf/actions/workflows/ci.yml/badge.svg)
 
 qt_idf 是一套在 PC 上调试和开发物联网相关功能组件的开发环境，原来是基于 QT 搭建的编译环境，所以叫 qt_idf ，后来编译方式改成 cmake + bat 脚本，通过命令行进行编译。
 
