@@ -67,7 +67,7 @@ make clean
   - [ ] GUI 组件
     - [x] lvgl
     - [x] qrcode 二维码编码
-    - [ ] code128 条形码编码
+    - [x] code128 条形码编码
     - [x] lv_fs_if 文件系统
     - [x] lv_drivers 显示和输入设备驱动
     - [x] lv_lib_jpg jpg 图片解码
