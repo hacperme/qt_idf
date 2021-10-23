@@ -4,7 +4,7 @@
 
 #include "lv_ex_conf.h"
 
-#include "lv_demo_qrcode/lv_demo_qrcode.h"
+#include "lv_demo_qrcode_barcode/lv_demo_qrcode_barcode.h"
 #include "lv_demo_img_jpg/lv_demo_img_jpg.h"
 #include "lv_demo_img_png/lv_demo_img_png.h"
 

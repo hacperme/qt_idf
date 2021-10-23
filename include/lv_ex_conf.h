@@ -41,8 +41,8 @@
 /*Stress test for LVGL*/
 #define LV_USE_DEMO_STRESS      1
 
-/*QRcode demo*/
-#define LV_USE_DEMO_QRCODE      1
+/*QRcode and barcode demo*/
+#define LV_USE_DEMO_QRCODE_BARCODE      1
 
 /*jpg image display demo*/
 #define LV_USE_DEMO_IMG_JPG      1

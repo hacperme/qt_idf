@@ -127,7 +127,7 @@ static void lv_demo_task(lv_task_t *param)
 
     // lv_demo_img_png();
     // lv_demo_img_jpg();
-    lv_demo_qrcode();
+    lv_demo_qrcode_barcode();
 }
 
 /**
