@@ -48,3 +48,7 @@ endif()
 if(CONFIG_LV_LIB_BARCODE_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_lib_barcode code128)
 endif()
+
+if(CONFIG_LV_LIB_FREETYPE_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/lv_lib_freetype lv_lib_freetype)
+endif()

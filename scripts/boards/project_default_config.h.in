@@ -37,6 +37,9 @@
 /* lv_lib_barcode */
 #cmakedefine CONFIG_LV_LIB_BARCODE_ENABLE
 
+/* lv_lib_freetype */
+#cmakedefine CONFIG_LV_LIB_FREETYPE_ENABLE
+
 /* examples */
 #cmakedefine CONFIG_BUILD_EXAMPLES_ENABLE
 #ifdef CONFIG_BUILD_EXAMPLES_ENABLE

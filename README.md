@@ -76,7 +76,7 @@ make clean
     - [x] lv_lib_png png 图片解码
     - [ ] gif 图片解码
     - [ ] bmp 图片解码
-    - [ ] freetype 支持矢量字体
+    - [x] freetype 支持矢量字体
   - [ ] ZBAR
   - [x] SDL2 
   - [ ] audio codec
