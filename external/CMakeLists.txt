@@ -52,3 +52,7 @@ endif()
 if(CONFIG_LV_LIB_FREETYPE_ENABLE)
 add_subdirectory(${EXTERNAL_DIR}/lv_lib_freetype lv_lib_freetype)
 endif()
+
+if(CONFIG_NR_MICRO_SHELL_ENABLE)
+add_subdirectory(${EXTERNAL_DIR}/nr_micro_shell nr_micro_shell)
+endif()

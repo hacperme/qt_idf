@@ -12,13 +12,13 @@ set(ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 include(${ROOT_DIR}/scripts/boards/project_config.cmake)
 
-set(qt_idf_sources
-    main.c
-   )
+# set(qt_idf_sources
+#     main.c
+#    )
 
 add_subdirectory(${EXTERNAL_DIR})
 add_subdirectory(examples)
 
-add_executable(qt_idf ${qt_idf_sources})
+# add_executable(qt_idf ${qt_idf_sources})
 
 
