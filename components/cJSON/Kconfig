@@ -1,0 +1,7 @@
+menuconfig CJSON
+    bool "CJSON"
+    default y
+
+if CJSON
+
+endif
