@@ -1,0 +1,5 @@
+menu "SDK Components"
+
+source "$SDK_BASE/components/nr_micro_shell/Kconfig"
+
+endmenu

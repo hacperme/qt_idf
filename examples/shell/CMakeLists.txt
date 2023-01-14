@@ -1,14 +1,17 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 
-project(example_shell LANGUAGES C)
+# file(READ proj.conf PROJ_CONFIG)
+# message("PROJ_CONFIG:${PROJ_CONFIG}")
 
+message("example_shell start")
 
-add_executable(example_shell example_shell.c
-                             cmd/cmds.c
-)
+find_package(qt_idf_sdk REQUIRED HINTS $ENV{SDK_BASE})
 
-target_link_libraries(example_shell PRIVATE nr_micro_shell)
+# sdk_set_linker_script(template.ld)
+sdk_add_subdirectory_if_exist(cmds)
 
-# target_include_directories(nr_micro_shell PRIVATE
+sdk_set_main_file(main.c)
 
-# )
+project(shell)
+
+message("example_shell end")

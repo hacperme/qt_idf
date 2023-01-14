@@ -1,0 +1,1 @@
+#define CONFIG_NR_MICRO_SHELL 1

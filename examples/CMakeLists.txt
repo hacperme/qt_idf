@@ -1,18 +1,16 @@
+cmake_minimum_required(VERSION 3.15)
 
-if(CONFIG_BUILD_EXAMPLES_ENABLE)
-    if(CONFIG_BUILD_LINKIT_EXAMPLES_ENABLE)
-    add_subdirectory(linkit_examples)
-    endif()
+# file(READ proj.conf PROJ_CONFIG)
+# message("PROJ_CONFIG:${PROJ_CONFIG}")
 
-    if(CONFIG_BUILD_LVGL_EXAMPLES_ENABLE)
-    add_subdirectory(lvgl_examples)
-    endif()
+message("examples start")
 
-    if(CONFIG_BUILD_LIBWEBSOCKET_EXAMPLES_ENABLE)
-    add_subdirectory(libwebsocket_examples)
-    endif()
+find_package(qt_idf_sdk REQUIRED HINTS $ENV{SDK_BASE})
 
-    if(CONFIG_BUILD_SHELL_EXAMPLES_ENABLE)
-    add_subdirectory(shell)
-    endif()
-endif()
+# sdk_set_linker_script(template.ld)
+sdk_add_subdirectory_if_exist(shell/cmds)
+sdk_set_main_file(shell/main.c)
+
+project(shell)
+
+message("examples end")
