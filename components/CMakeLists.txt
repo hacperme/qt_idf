@@ -2,3 +2,4 @@ message("components")
 
 sdk_add_subdirectory_ifdef(CONFIG_NR_MICRO_SHELL nr_micro_shell)
 sdk_add_subdirectory_ifdef(CONFIG_CJSON cJSON)
+sdk_add_subdirectory_ifdef(CONFIG_LVGL lvgl)
