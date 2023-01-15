@@ -20,6 +20,7 @@
 #include "sdl.h"
 #include "lv_examples.h"
 #include "lv_demos.h"
+#include "ui.h"
 
 /*********************
  *      DEFINES
@@ -68,7 +69,8 @@ static int lv_gui_main_thread(void *data)
     hal_init();
 
     // lv_demo_music();
-    lv_demo_widgets();
+    // lv_demo_widgets();
+    ui_init();
     
     while (1)
     {
