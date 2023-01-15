@@ -1,0 +1,7 @@
+menuconfig SDL2
+    bool "SDL2"
+    default y
+
+if SDL2
+
+endif

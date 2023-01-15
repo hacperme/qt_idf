@@ -8,6 +8,11 @@ CROSS_COMPILE ?=
 #cmake definition config
 cmake_definition+= -DCROSS_COMPILE=${CROSS_COMPILE}
 cmake_definition+= -DCONFIG_NR_MICRO_SHELL=y
+cmake_definition+= -DCONFIG_SDL2=y
+
+# exec:
+# 	python $(SDK_BASE)/tools/kconfig/genconfig.py
+
 
 
 include $(SDK_BASE)/project.build
