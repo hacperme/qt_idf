@@ -1,0 +1,7 @@
+menuconfig NR_MICRO_SHELL
+    bool "nr_micro_shell"
+    default y
+
+if NR_MICRO_SHELL
+
+endif

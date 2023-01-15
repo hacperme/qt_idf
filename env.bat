@@ -8,6 +8,7 @@ set TOOLCHAIN_PATH=%cur_dir%tools\mingw32\bin
 set PYTHON_PATH=%cur_dir%tools\python-3.7.6rc1-embed-amd64
 set PYTHON_SCRIPTS_PATH=%PYTHON_PATH%\Scripts
 set PYTHON_LIB_PATH=%PYTHON_PATH%\Lib\site-packages
+rem set NINJA_PATH=%cur_dir%tools\ninja-win
 set PATH=%CMAKE_PATH%;%MINGW_PATH%;%TOOLCHAIN_PATH%;%PYTHON_PATH%;%PYTHON_SCRIPTS_PATH%;%PYTHON_LIB_PATH%
 echo %PATH%
 
