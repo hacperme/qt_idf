@@ -7,6 +7,7 @@
  * COPY THIS FILE AS lv_drv_conf.h
  */
 
+/* clang-format off */
 #if 1 /*Set it to "1" to enable the content*/
 
 #ifndef LV_DRV_CONF_H
@@ -80,13 +81,46 @@
  *********************/
 
 /*-------------------
+ *  SDL
+ *-------------------*/
+
+/* SDL based drivers for display, mouse, mousewheel and keyboard*/
+#ifndef USE_SDL
+# define USE_SDL 1
+#endif
+
+/* Hardware accelerated SDL driver */
+#ifndef USE_SDL_GPU
+# define USE_SDL_GPU 0
+#endif
+
+#if USE_SDL || USE_SDL_GPU
+#  define SDL_HOR_RES     LV_HOR_RES_MAX
+#  define SDL_VER_RES     LV_VER_RES_MAX
+
+/* Scale window by this factor (useful when simulating small screens) */
+#  define SDL_ZOOM        1
+
+/* Used to test true double buffering with only address changing.
+ * Use 2 draw buffers, bith with SDL_HOR_RES x SDL_VER_RES size*/
+#  define SDL_DOUBLE_BUFFERED 0
+
+/*Eclipse: <SDL2/SDL.h>    Visual Studio: <SDL.h>*/
+#  define SDL_INCLUDE_PATH    <SDL2/SDL.h>
+
+/*Open two windows to test multi display support*/
+#  define SDL_DUAL_DISPLAY            0
+#endif
+
+/*-------------------
  *  Monitor of PC
  *-------------------*/
-#if WIN32
-#define USE_MONITOR         1
-#else
-#define USE_MONITOR         1
+
+/*DEPRECATED: Use the SDL driver instead. */
+#ifndef USE_MONITOR
+#  define USE_MONITOR         0
 #endif
+
 #if USE_MONITOR
 #  define MONITOR_HOR_RES     LV_HOR_RES
 #  define MONITOR_VER_RES     LV_VER_RES
@@ -95,14 +129,11 @@
 #  define MONITOR_ZOOM        1
 
 /* Used to test true double buffering with only address changing.
- * Set LV_VDB_SIZE = (LV_HOR_RES * LV_VER_RES) and  LV_VDB_DOUBLE = 1 and LV_COLOR_DEPTH = 32" */
+ * Use 2 draw buffers, bith with MONITOR_HOR_RES x MONITOR_VER_RES size*/
 #  define MONITOR_DOUBLE_BUFFERED 0
 
 /*Eclipse: <SDL2/SDL.h>    Visual Studio: <SDL.h>*/
 #  define MONITOR_SDL_INCLUDE_PATH    <SDL2/SDL.h>
-
-/*Different rendering might be used if running in a Virtual machine*/
-#  define MONITOR_VIRTUAL_MACHINE 0
 
 /*Open two windows to test multi display support*/
 #  define MONITOR_DUAL            0
@@ -118,6 +149,47 @@
 #if USE_WINDOWS
 #  define WINDOW_HOR_RES      480
 #  define WINDOW_VER_RES      320
+#endif
+
+/*----------------------------
+ *  Native Windows (win32drv)
+ *---------------------------*/
+#ifndef USE_WIN32DRV
+#  define USE_WIN32DRV       0
+#endif
+
+#if USE_WIN32DRV
+/* Scale window by this factor (useful when simulating small screens) */
+#  define WIN32DRV_MONITOR_ZOOM        1
+#endif
+
+/*----------------------------------------
+ *  GTK drivers (monitor, mouse, keyboard
+ *---------------------------------------*/
+#ifndef USE_GTK
+#  define USE_GTK       0
+#endif
+
+/*----------------------------------------
+ *  Wayland drivers (monitor, mouse, keyboard, touchscreen)
+ *---------------------------------------*/
+#ifndef USE_WAYLAND
+#  define USE_WAYLAND       0
+#endif
+
+#if USE_WAYLAND
+/* Support for client-side decorations */
+#  ifndef LV_WAYLAND_CLIENT_SIDE_DECORATIONS
+#    define LV_WAYLAND_CLIENT_SIDE_DECORATIONS 1
+#  endif
+/* Support for (deprecated) wl-shell protocol */
+#  ifndef LV_WAYLAND_WL_SHELL
+#    define LV_WAYLAND_WL_SHELL 1
+#  endif
+/* Support for xdg-shell protocol */
+#  ifndef LV_WAYLAND_XDG_SHELL
+#    define LV_WAYLAND_XDG_SHELL 0
+#  endif
 #endif
 
 /*----------------
@@ -179,6 +251,67 @@
 /*No settings*/
 #endif  /*USE_ST7565*/
 
+/*------------------------------
+ *  GC9A01 (color, low res.)
+ *-----------------------------*/
+#ifndef USE_GC9A01
+#  define USE_GC9A01          0
+#endif
+
+#if USE_GC9A01
+/*No settings*/
+#endif  /*USE_GC9A01*/
+
+/*------------------------------------------
+ *  UC1610 (4 gray 160*[104|128])
+ *  (EA DOGXL160 160x104 tested)
+ *-----------------------------------------*/
+#ifndef USE_UC1610
+#  define USE_UC1610          0
+#endif
+
+#if USE_UC1610
+#  define UC1610_HOR_RES         LV_HOR_RES
+#  define UC1610_VER_RES         LV_VER_RES
+#  define UC1610_INIT_CONTRAST   33   /* init contrast, values in [%] */
+#  define UC1610_INIT_HARD_RST   0    /* 1 : hardware reset at init, 0 : software reset */
+#  define UC1610_TOP_VIEW        0    /* 0 : Bottom View, 1 : Top View */
+#endif  /*USE_UC1610*/
+
+/*-------------------------------------------------
+ *  SHARP memory in pixel monochrome display series
+ *      LS012B7DD01 (184x38  pixels.)
+ *      LS013B7DH03 (128x128 pixels.)
+ *      LS013B7DH05 (144x168 pixels.)
+ *      LS027B7DH01 (400x240 pixels.) (tested)
+ *      LS032B7DD02 (336x536 pixels.)
+ *      LS044Q7DH01 (320x240 pixels.)
+ *------------------------------------------------*/
+#ifndef USE_SHARP_MIP
+#  define USE_SHARP_MIP       0
+#endif
+
+#if USE_SHARP_MIP
+#  define SHARP_MIP_HOR_RES             LV_HOR_RES
+#  define SHARP_MIP_VER_RES             LV_VER_RES
+#  define SHARP_MIP_SOFT_COM_INVERSION  0
+#  define SHARP_MIP_REV_BYTE(b)         /*((uint8_t) __REV(__RBIT(b)))*/  /*Architecture / compiler dependent byte bits order reverse*/
+#endif  /*USE_SHARP_MIP*/
+
+/*-------------------------------------------------
+ *  ILI9341 240X320 TFT LCD
+ *------------------------------------------------*/
+#ifndef USE_ILI9341
+#  define USE_ILI9341       0
+#endif
+
+#if USE_ILI9341
+#  define ILI9341_HOR_RES       LV_HOR_RES
+#  define ILI9341_VER_RES       LV_VER_RES
+#  define ILI9341_GAMMA         1
+#  define ILI9341_TEARING       0
+#endif  /*USE_ILI9341*/
+
 /*-----------------------------------------
  *  Linux frame buffer device (/dev/fbx)
  *-----------------------------------------*/
@@ -190,49 +323,28 @@
 #  define FBDEV_PATH          "/dev/fb0"
 #endif
 
-#ifndef USE_GC9A01
-#  define USE_GC9A01          0
-#endif
-#if USE_GC9A01
-/*No settings*/
-#endif  /*USE_GC9A01*/
-
-#ifndef USE_ILI9341
-#  define USE_ILI9341         0
-#endif
-#if USE_ILI9341
-/*No settings*/
-#endif  /*USE_ILI9341*/
-
-#ifndef USE_SHARP_MIP
-#  define USE_SHARP_MIP       0
-#endif
-#if USE_SHARP_MIP
-/*No settings*/
-#endif  /*USE_SHARP_MIP*/
-
-#ifndef USE_DRM
-#  define USE_DRM             0
-#endif
-#if USE_DRM
-/*No settings*/
-#endif  /*USE_DRM*/
-
+/*-----------------------------------------
+ *  FreeBSD frame buffer device (/dev/fbx)
+ *.........................................*/
 #ifndef USE_BSD_FBDEV
-#  define USE_BSD_FBDEV       0
+#  define USE_BSD_FBDEV		0
 #endif
+
 #if USE_BSD_FBDEV
-/*No settings*/
-#endif  /*USE_BSD_FBDEV*/
-
-#ifndef USE_UC1610
-#  define USE_UC1610          0
+# define FBDEV_PATH		"/dev/fb0"
 #endif
-#if USE_UC1610
-/*No settings*/
-#endif  /*USE_UC1610*/
 
+/*-----------------------------------------
+ *  DRM/KMS device (/dev/dri/cardX)
+ *-----------------------------------------*/
+#ifndef USE_DRM
+#  define USE_DRM           0
+#endif
 
+#if USE_DRM
+#  define DRM_CARD          "/dev/dri/card0"
+#  define DRM_CONNECTOR_ID  -1	/* -1 for the first connected one */
+#endif
 
 /*********************
  *  INPUT DEVICES
@@ -253,7 +365,9 @@
 #  define XPT2046_X_MAX       3800
 #  define XPT2046_Y_MAX       3800
 #  define XPT2046_AVG         4
-#  define XPT2046_INV         0
+#  define XPT2046_X_INV       0
+#  define XPT2046_Y_INV       0
+#  define XPT2046_XY_SWAP     0
 #endif
 
 /*-----------------
@@ -282,8 +396,9 @@
 /*---------------------------------------
  * Mouse or touchpad on PC (using SDL)
  *-------------------------------------*/
+/*DEPRECATED: Use the SDL driver instead. */
 #ifndef USE_MOUSE
-#  define USE_MOUSE           1
+#  define USE_MOUSE           0
 #endif
 
 #if USE_MOUSE
@@ -293,13 +408,32 @@
 /*-------------------------------------------
  * Mousewheel as encoder on PC (using SDL)
  *------------------------------------------*/
+/*DEPRECATED: Use the SDL driver instead. */
 #ifndef USE_MOUSEWHEEL
-#  define USE_MOUSEWHEEL      1
+#  define USE_MOUSEWHEEL      0
 #endif
 
 #if USE_MOUSEWHEEL
 /*No settings*/
 #endif
+
+/*-------------------------------------------------
+ * Touchscreen, mouse/touchpad or keyboard as libinput interface (for Linux based systems)
+ *------------------------------------------------*/
+#ifndef USE_LIBINPUT
+#  define USE_LIBINPUT           0
+#endif
+
+#ifndef USE_BSD_LIBINPUT
+#  define USE_BSD_LIBINPUT       0
+#endif
+
+#if USE_LIBINPUT || USE_BSD_LIBINPUT
+/*If only a single device of the same type is connected, you can also auto detect it, e.g.:
+ *#define LIBINPUT_NAME   libinput_find_dev(LIBINPUT_CAPABILITY_TOUCH, false)*/
+#  define LIBINPUT_NAME   "/dev/input/event0"        /*You can use the "evtest" Linux tool to get the list of devices and test them*/
+
+#endif  /*USE_LIBINPUT || USE_BSD_LIBINPUT*/
 
 /*-------------------------------------------------
  * Mouse or touchpad as evdev interface (for Linux based systems)
@@ -312,57 +446,46 @@
 #  define USE_BSD_EVDEV       0
 #endif
 
-#if USE_EVDEV
+#if USE_EVDEV || USE_BSD_EVDEV
 #  define EVDEV_NAME   "/dev/input/event0"        /*You can use the "evtest" Linux tool to get the list of devices and test them*/
 #  define EVDEV_SWAP_AXES         0               /*Swap the x and y axes of the touchscreen*/
 
-#  define EVDEV_SCALE             0               /* Scale input, e.g. if touchscreen resolution does not match display resolution */
-#  if EVDEV_SCALE
-#    define EVDEV_SCALE_HOR_RES     (4096)          /* Horizontal resolution of touchscreen */
-#    define EVDEV_SCALE_VER_RES     (4096)          /* Vertical resolution of touchscreen */
-#  endif  /*EVDEV_SCALE*/
-
 #  define EVDEV_CALIBRATE         0               /*Scale and offset the touchscreen coordinates by using maximum and minimum values for each axis*/
+
 #  if EVDEV_CALIBRATE
-#    define EVDEV_HOR_MIN   3800                    /*If EVDEV_XXX_MIN > EVDEV_XXX_MAX the XXX axis is automatically inverted*/
-#    define EVDEV_HOR_MAX   200
-#    define EVDEV_VER_MIN   200
-#    define EVDEV_VER_MAX   3800
-#  endif  /*EVDEV_SCALE*/
+#    define EVDEV_HOR_MIN         0               /*to invert axis swap EVDEV_XXX_MIN by EVDEV_XXX_MAX*/
+#    define EVDEV_HOR_MAX      4096               /*"evtest" Linux tool can help to get the correct calibraion values>*/
+#    define EVDEV_VER_MIN         0
+#    define EVDEV_VER_MAX      4096
+#  endif  /*EVDEV_CALIBRATE*/
 #endif  /*USE_EVDEV*/
+
+/*-------------------------------------------------
+ * Full keyboard support for evdev and libinput interface
+ *------------------------------------------------*/
+#  ifndef USE_XKB
+#    define USE_XKB           0
+#  endif
+
+#if USE_LIBINPUT || USE_BSD_LIBINPUT || USE_EVDEV || USE_BSD_EVDEV
+#  if USE_XKB
+#    define XKB_KEY_MAP       { .rules = NULL, \
+                                .model = "pc101", \
+                                .layout = "us", \
+                                .variant = NULL, \
+                                .options = NULL } /*"setxkbmap -query" can help find the right values for your keyboard*/
+#  endif  /*USE_XKB*/
+#endif  /*USE_LIBINPUT || USE_BSD_LIBINPUT || USE_EVDEV || USE_BSD_EVDEV*/
 
 /*-------------------------------
  *   Keyboard of a PC (using SDL)
  *------------------------------*/
+/*DEPRECATED: Use the SDL driver instead. */
 #ifndef USE_KEYBOARD
-#  define USE_KEYBOARD        1
+#  define USE_KEYBOARD        0
 #endif
 
 #if USE_KEYBOARD
-/*No settings*/
-#endif
-
-#ifndef USE_LIBINPUT
-#  define USE_LIBINPUT        0
-#endif
-
-#if USE_LIBINPUT
-/*No settings*/
-#endif
-
-#ifndef USE_GTK
-#  define USE_GTK        0
-#endif
-
-#if USE_GTK
-/*No settings*/
-#endif
-
-#ifndef USE_WIN32DRV
-#  define USE_WIN32DRV        0
-#endif
-
-#if USE_WIN32DRV
 /*No settings*/
 #endif
 

@@ -134,9 +134,9 @@ uint32_t gtkdrv_tick_get(void)
 
 /**
  * Flush a buffer to the marked area
- * @param drv pointer to driver where this function belongs
+ * @param disp_drv pointer to driver where this function belongs
  * @param area an area where to copy `color_p`
- * @param color_p an array of pixel to copy to the `area` part of the screen
+ * @param color_p an array of pixels to copy to the `area` part of the screen
  */
 void gtkdrv_flush_cb(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
 {
@@ -171,22 +171,18 @@ void gtkdrv_flush_cb(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_
 }
 
 
-bool gtkdrv_mouse_read_cb(lv_indev_drv_t * drv, lv_indev_data_t * data)
+void gtkdrv_mouse_read_cb(lv_indev_drv_t * drv, lv_indev_data_t * data)
 {
     data->point.x = mouse_x;
     data->point.y = mouse_y;
     data->state = mouse_btn;
-
-    return false;
 }
 
 
-bool gtkdrv_keyboard_read_cb(lv_indev_drv_t * drv, lv_indev_data_t * data)
+void gtkdrv_keyboard_read_cb(lv_indev_drv_t * drv, lv_indev_data_t * data)
 {
     data->key = last_key;
     data->state = last_key_state;
-
-    return false;
 }
 
 
