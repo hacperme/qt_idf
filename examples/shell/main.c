@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 {
 
     SDL_Init(SDL_INIT_VIDEO);
-    nr_shell_thread = SDL_CreateThreadWithStackSize(nr_shell_thread_entry, "nr_shell_thread_entry", 2 * 1024, NULL);
+    nr_shell_thread = SDL_CreateThreadWithStackSize(nr_shell_thread_entry, "nr_shell_thread_entry", 8 * 1024, NULL);
     SDL_WaitThread(nr_shell_thread, NULL);
     SDL_Quit();
     return 0;

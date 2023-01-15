@@ -11,6 +11,7 @@ cmake_definition+= -DCONFIG_NR_MICRO_SHELL=y
 cmake_definition+= -DCONFIG_CJSON=y
 cmake_definition+= -DCONFIG_LVGL=y
 cmake_definition+= -DCONFIG_SDL2=y
+cmake_definition+= -DLV_DRIVERS=y
 
 include $(SDK_BASE)/project.build
 

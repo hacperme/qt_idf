@@ -1,0 +1,7 @@
+menuconfig LV_DRIVERS
+    bool "lv_drivers"
+    default y
+
+if LV_DRIVERS
+
+endif

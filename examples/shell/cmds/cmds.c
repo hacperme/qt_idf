@@ -35,39 +35,19 @@
 #include <string.h>
 #include <ctype.h>
 
+extern void shell_lvgl_cmd(int argc, char *argv);
+
 /**
- * @brief ls command
+ * @brief help command
  */
-void shell_ls_cmd(int argc, char *argv)
+void shell_help_cmd(int argc, char *argv)
 {
 	unsigned int i = 0;
-	if (argc > 1)
-	{
-		if (!strcmp("cmd", &argv[(int)argv[1]]))
-		{
 
-			for (i = 0; nr_shell.static_cmd[i].fp != NULL; i++)
-			{
-				shell_printf("%s",nr_shell.static_cmd[i].cmd);
-				shell_printf("\r\n");
-			}
-		}
-		else if (!strcmp("-v", &argv[(int)argv[1]]))
-		{
-			shell_printf("ls version 1.0.\r\n");
-		}
-		else if (!strcmp("-h", &argv[(int)argv[1]]))
-		{
-			shell_printf("useage: ls [options]\r\n");
-			shell_printf("options: \r\n");
-			shell_printf("\t -h \t: show help\r\n");
-			shell_printf("\t -v \t: show version\r\n");
-			shell_printf("\t cmd \t: show all commands\r\n");
-		}
-	}
-	else
+	for (i = 0; nr_shell.static_cmd[i].fp != NULL; i++)
 	{
-		shell_printf("ls need more arguments!\r\n");
+		shell_printf("%s", nr_shell.static_cmd[i].cmd);
+		shell_printf("\r\n");
 	}
 }
 
@@ -85,13 +65,13 @@ void shell_test_cmd(int argc, char *argv)
 }
 
 #ifdef NR_SHELL_USING_EXPORT_CMD
-NR_SHELL_CMD_EXPORT(ls, shell_ls_cmd);
 NR_SHELL_CMD_EXPORT(test, shell_test_cmd);
 #else
 const static_cmd_st static_cmd[] =
 	{
-		{"ls", shell_ls_cmd, NULL},
+		{"help", shell_help_cmd, NULL},
 		{"test", shell_test_cmd, NULL},
+		{"lvgl", shell_lvgl_cmd, "lvgl test command"},
 		{"\0", NULL, NULL}};
 #endif
 
