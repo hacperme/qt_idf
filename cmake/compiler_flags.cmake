@@ -47,3 +47,6 @@ sdk_add_link_options(
 
 sdk_add_compile_options_ifdef(CONFIG_DEBUG -g3)
 sdk_add_compile_options(-O2)
+
+
+sdk_add_compile_options_ifdef(CONFIG_WERROR -Werror)

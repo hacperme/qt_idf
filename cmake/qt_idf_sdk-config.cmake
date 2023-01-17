@@ -2,6 +2,8 @@ if(NOT DEFINED ENV{SDK_BASE})
     message(FATAL_ERROR "please set SDK_BASE in your system environment")
 endif()
 
+option(CONFIG_WERROR "Enable -Werror" ON)
+
 set(SDK_BASE $ENV{SDK_BASE})
 
 set(build_dir ${CMAKE_CURRENT_BINARY_DIR}/build_out)

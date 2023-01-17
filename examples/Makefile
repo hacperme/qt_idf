@@ -14,6 +14,7 @@ cmake_definition+= -DCONFIG_LVGL_EXAMPLES=y
 cmake_definition+= -DCONFIG_LVGL_DEMOS=y
 cmake_definition+= -DCONFIG_SDL2=y
 cmake_definition+= -DCONFIG_LV_DRIVERS=y
+cmake_definition+= -DCONFIG_MINIAUDIO=y
 
 
 include $(SDK_BASE)/project.build

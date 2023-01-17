@@ -33,7 +33,9 @@
 
 #include "nr_micro_shell.h"
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
+#include "miniaudio.h"
 
 extern void shell_lvgl_cmd(int argc, char *argv);
 
@@ -64,6 +66,77 @@ void shell_test_cmd(int argc, char *argv)
 	}
 }
 
+
+ma_engine engine;
+ma_sound sound;
+/**
+ * @brief audio test command
+ */
+void shell_audio_cmd(int argc, char *argv)
+{
+	ma_result result;
+	if (argc < 2)
+	{
+		shell_printf("Usage: audio <init|deinit|play|stop|resume|volume|state>\r\n");
+		return;
+	}
+
+	if (strcmp(&(argv[(int)argv[1]]), "init") == 0)
+	{
+		result = ma_engine_init(NULL, &engine);
+		if (result != MA_SUCCESS)
+		{
+			shell_printf("Failed to initialize the engine.\r\n");
+			return; // Failed to initialize the engine.
+		}
+		shell_printf("init\r\n");
+	}
+	else if (strcmp(&(argv[(int)argv[1]]), "deinit") == 0)
+	{
+		ma_sound_uninit(&sound);
+		ma_engine_uninit(&engine);
+		shell_printf("deinit\r\n");
+	}
+	else if (strcmp(&(argv[(int)argv[1]]), "play") == 0)
+	{
+		shell_printf("play %s\r\n", &(argv[(int)argv[2]]));
+
+		result = ma_sound_init_from_file(&engine, &(argv[(int)argv[2]]), 0, NULL, NULL, &sound);
+		if (result != MA_SUCCESS)
+		{
+			shell_printf("Failed to initialize the sound.\r\n");
+			return;
+		}
+
+		ma_sound_start(&sound);
+	}
+	else if (strcmp(&(argv[(int)argv[1]]), "stop") == 0)
+	{
+		shell_printf("stop\r\n");
+		ma_sound_stop(&sound);
+	}
+	else if (strcmp(&(argv[(int)argv[1]]), "resume") == 0)
+	{
+		shell_printf("resume\r\n");
+		ma_sound_start(&sound);
+	}
+	else if (strcmp(&(argv[(int)argv[1]]), "volume") == 0)
+	{
+		float volume = 0;
+		volume = atof(&(argv[(int)argv[2]]));
+		shell_printf("volume:%f\r\n", volume);
+		ma_sound_set_volume(&sound, volume);
+	}
+	else if (strcmp(&(argv[(int)argv[1]]), "state") == 0)
+	{
+		shell_printf("%s\r\n", (ma_sound_at_end(&sound)==MA_FALSE) ? "playing" : "end");
+	}
+	else
+	{
+		shell_printf("Usage: audio <init|deinit|play|stop|resume|volume|state>\r\n");
+	}
+}
+
 #ifdef NR_SHELL_USING_EXPORT_CMD
 NR_SHELL_CMD_EXPORT(test, shell_test_cmd);
 #else
@@ -72,6 +145,7 @@ const static_cmd_st static_cmd[] =
 		{"help", shell_help_cmd, NULL},
 		{"test", shell_test_cmd, NULL},
 		{"lvgl", shell_lvgl_cmd, "lvgl test command"},
+		{"audio", shell_audio_cmd, "audio test command"},
 		{"\0", NULL, NULL}};
 #endif
 
