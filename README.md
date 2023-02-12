@@ -102,7 +102,7 @@ make clean
   - [x] windows_x86_mingw_gcc
   - [x] github workflows
   - [ ] ninja
-  - [ ] kconfig
+  - [x] kconfig
 - [ ] 序列化和反序列化
   - [x] cJSON
   - [ ] protobuf-c
