@@ -1,22 +1,9 @@
-SDK_DEMO_PATH = .
+build_dirs += shell
 
-SDK_BASE ?= ${SDK_DEMO_PATH}/..
+all: $(build_dirs)
 
-export SDK_BASE
+$(build_dirs):
+	make -C $@
 
-CROSS_COMPILE ?=
-#cmake definition config
-cmake_definition+= -DCROSS_COMPILE=${CROSS_COMPILE}
-cmake_definition+= -DCONFIG_NR_MICRO_SHELL=y
-cmake_definition+= -DCONFIG_CJSON=y
-cmake_definition+= -DCONFIG_LVGL=y
-cmake_definition+= -DCONFIG_LVGL_EXAMPLES=y
-cmake_definition+= -DCONFIG_LVGL_DEMOS=y
-cmake_definition+= -DCONFIG_SDL2=y
-cmake_definition+= -DCONFIG_LV_DRIVERS=y
-cmake_definition+= -DCONFIG_MINIAUDIO=y
-cmake_definition+= -DCONFIG_QCBOR=y
-
-
-include $(SDK_BASE)/project.build
+.PHONY: $(build_dirs)
 
