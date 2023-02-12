@@ -106,7 +106,7 @@ make clean
 - [ ] 序列化和反序列化
   - [x] cJSON
   - [ ] protobuf-c
-  - [ ] CBOR
+  - [x] CBOR
 - [ ] 其他
   - [ ] Unity
   - [ ] bsdiff

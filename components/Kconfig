@@ -3,4 +3,5 @@ menu "SDK Components"
 source "$SDK_BASE/components/nr_micro_shell/Kconfig"
 source "$SDK_BASE/components/cJSON/Kconfig"
 source "$SDK_BASE/components/lvgl/Kconfig"
+source "$SDK_BASE/components/QCBOR/Kconfig"
 endmenu

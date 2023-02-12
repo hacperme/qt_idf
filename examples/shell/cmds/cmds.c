@@ -38,6 +38,7 @@
 #include "miniaudio.h"
 
 extern void shell_lvgl_cmd(int argc, char *argv);
+extern void shell_cbor_cmd(int argc, char *argv);
 
 /**
  * @brief help command
@@ -146,6 +147,7 @@ const static_cmd_st static_cmd[] =
 		{"test", shell_test_cmd, NULL},
 		{"lvgl", shell_lvgl_cmd, "lvgl test command"},
 		{"audio", shell_audio_cmd, "audio test command"},
+		{"cbor",shell_cbor_cmd,"cbor test command"},
 		{"\0", NULL, NULL}};
 #endif
 
