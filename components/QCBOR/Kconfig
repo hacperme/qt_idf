@@ -1,0 +1,7 @@
+menuconfig QCBOR
+    bool "qcbor"
+    default y
+
+if QCBOR
+
+endif

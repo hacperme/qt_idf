@@ -1,0 +1,7 @@
+menuconfig MINIAUDIO
+    bool "miniaudio"
+    default y
+
+if MINIAUDIO
+
+endif
