@@ -1,0 +1,7 @@
+menuconfig OPUS
+    bool "opus"
+    default y
+
+if OPUS
+
+endif
