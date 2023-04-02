@@ -30,6 +30,7 @@ $<$<COMPILE_LANGUAGE:CXX>:-std=c++11>
 $<$<COMPILE_LANGUAGE:CXX>:-nostdlib>
 $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
 $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
+-msse4.1
 )
 
 sdk_add_link_options(
