@@ -81,7 +81,7 @@ make clean
   - [x] SDL2 
   - [ ] audio codec
     - [ ] Speex 
-    - [ ] Opus
+    - [x] Opus
     - [ ] fdk-aac
     - [ ] amrnb
     - [ ] amrwb
