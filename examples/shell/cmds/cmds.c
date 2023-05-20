@@ -39,6 +39,7 @@
 
 extern void shell_lvgl_cmd(int argc, char *argv);
 extern void shell_cbor_cmd(int argc, char *argv);
+extern void shell_hmac_cmd(int argc, char *argv);
 
 /**
  * @brief help command
@@ -148,6 +149,7 @@ const static_cmd_st static_cmd[] =
 		{"lvgl", shell_lvgl_cmd, "lvgl test command"},
 		{"audio", shell_audio_cmd, "audio test command"},
 		{"cbor",shell_cbor_cmd,"cbor test command"},
+		{"hmac",shell_hmac_cmd,"hmac test command"},
 		{"\0", NULL, NULL}};
 #endif
 
