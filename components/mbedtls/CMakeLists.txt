@@ -1,4 +1,4 @@
-message("QCBOR")
+message("mbedtls")
 
 sdk_generate_library()
 

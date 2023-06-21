@@ -3,6 +3,7 @@ if(NOT DEFINED ENV{SDK_BASE})
 endif()
 
 option(CONFIG_WERROR "Enable -Werror" ON)
+option(CONFIG_DEBUG "Enable debug" OFF)
 
 set(SDK_BASE $ENV{SDK_BASE})
 

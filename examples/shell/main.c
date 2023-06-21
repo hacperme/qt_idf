@@ -2,11 +2,15 @@
 #include "nr_micro_shell.h"
 #include <SDL2/SDL.h>
 
+#include "dlg/dlg.h"
+
 static SDL_Thread *nr_shell_thread = NULL;
 
 static int nr_shell_thread_entry(void *data)
 {
     char c;
+
+    dlg_info("shell_init");
     shell_init();
     while(1)
     {

@@ -1,0 +1,7 @@
+menuconfig DLG
+    bool "dlg"
+    default y
+
+if DLG
+
+endif
