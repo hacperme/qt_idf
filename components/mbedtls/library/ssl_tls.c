@@ -6605,6 +6605,12 @@ int mbedtls_ssl_derive_keys(mbedtls_ssl_context *ssl)
 
     MBEDTLS_SSL_DEBUG_MSG(2, ("<= derive keys"));
 
+    // MBEDTLS_SSL_DEBUG_MSG( 3, ( "ciphersuite = %s",
+    //                mbedtls_ssl_get_ciphersuite_name( ssl->session_negotiate->ciphersuite) ) );
+    // MBEDTLS_SSL_DEBUG_BUF( 3, "master secret", ssl->session_negotiate->master, 48 );
+    // MBEDTLS_SSL_DEBUG_BUF( 4, "random bytes", ssl->handshake->randbytes, 64 );
+    // MBEDTLS_SSL_DEBUG_BUF( 4, "key block", keyblk, 256 );
+
     return 0;
 }
 
