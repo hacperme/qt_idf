@@ -36,6 +36,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "miniaudio.h"
+#include "qrencode.h"
+#include "qrspec.h"
+#include "dlg/dlg.h"
 
 extern void shell_lvgl_cmd(int argc, char *argv);
 extern void shell_cbor_cmd(int argc, char *argv);
@@ -139,6 +142,68 @@ void shell_audio_cmd(int argc, char *argv)
 	}
 }
 
+void shell_libqrcodetest_cmd(int argc, char *argv)
+{
+	/*
+						##############  ##  ##  ##      ##  ##############
+						##          ##  ####      ######    ##          ##
+						##  ######  ##  ##  ##  ####  ####  ##  ######  ##
+						##  ######  ##        ####  ####    ##  ######  ##
+						##  ######  ##    ##      ####  ##  ##  ######  ##
+						##          ##  ##    ##    ######  ##          ##
+						##############  ##  ##  ##  ##  ##  ##############
+										####    ##    ##
+							######  ##  ######  ##  ############    ######
+						######    ##    ##      ####  ##      ##    ##
+						##      ##  ########        ####  ##    ####  ####
+						####  ##  ##  ####      ##      ##  ##        ####
+							##    ######  ##  ##########  ################
+						##  ######      ##    ####    ####    ##    ##
+						##          ##    ##  ##          ##########  ####
+						##  ######          ##      ##  ##  ######      ##
+						##  ##    ######      ####  ##  ##############
+										##        ####  ##      ##  ##
+						##############            ########  ##  ##  ######
+						##          ##        ##      ####      ####  ##
+						##  ######  ##  ##  ##      ##################
+						##  ######  ##  ####      ####      ##  ####    ##
+						##  ######  ##  ####  ##########    ####  ##    ##
+						##          ##    ######    ####  ##  ####      ##
+						##############        ##    ##  ##    ##    ######
+	*/
+	QRcode *qrcode = NULL;
+	char *data = "hello world";
+	int version = 0;
+	int width = 0;
+	version = QRspec_getMinimumVersion(strlen(data), QR_ECLEVEL_H);
+	qrcode = QRcode_encodeString((const char *)data, version, QR_ECLEVEL_H, QR_MODE_8, 1);
+	if(qrcode)
+	{	
+		width = qrcode->width;
+
+		for (size_t i = 0; i < width; i++)
+		{
+			for (size_t j = 0; j < width; j++)
+			{
+				if(qrcode->data[i*width+j] & 0x01)
+				{
+					shell_printf("##");
+				}
+				else
+				{
+					
+					shell_printf("  ");
+				}
+			}
+			shell_printf("\r\n");
+			
+		}
+		
+
+		QRcode_free(qrcode);
+	}
+}
+
 #ifdef NR_SHELL_USING_EXPORT_CMD
 NR_SHELL_CMD_EXPORT(test, shell_test_cmd);
 #else
@@ -150,6 +215,7 @@ const static_cmd_st static_cmd[] =
 		{"audio", shell_audio_cmd, "audio test command"},
 		{"cbor",shell_cbor_cmd,"cbor test command"},
 		{"hmac",shell_hmac_cmd,"hmac test command"},
+		{"qrtest",shell_libqrcodetest_cmd,"qrcode test command"},
 		{"\0", NULL, NULL}};
 #endif
 
