@@ -39,6 +39,7 @@
 #include "qrencode.h"
 #include "qrspec.h"
 #include "dlg/dlg.h"
+#include <uECC.h>
 
 extern void shell_lvgl_cmd(int argc, char *argv);
 extern void shell_cbor_cmd(int argc, char *argv);
@@ -142,6 +143,43 @@ void shell_audio_cmd(int argc, char *argv)
 	}
 }
 
+void shell_ecctest_cmd(int argc, char *argv)
+{
+	const struct uECC_Curve_t *curve = uECC_secp160r1();
+	uint8_t private1[21];
+	uint8_t private2[21];
+
+	uint8_t public1[40];
+	uint8_t public2[40];
+
+	uint8_t secret1[20];
+	uint8_t secret2[20];
+
+	uECC_make_key(public1, private1, curve);
+	uECC_make_key(public2, private2, curve);
+	int r = uECC_shared_secret(public2, private1, secret1, curve);
+	if (!r)
+	{
+		dlg_error("shared_secret() failed (1)\n");
+		return;
+	}
+	r = uECC_shared_secret(public1, private2, secret2, curve);
+	if (!r)
+	{
+		dlg_error("shared_secret() failed (1)\n");
+		return;
+	}
+
+	if (memcmp(secret1, secret2, 20) != 0)
+	{
+		dlg_error("Shared secrets are not identical!\n");
+	}
+	else
+	{
+		dlg_info("Shared secrets are identical\n");
+	}
+}
+
 void shell_libqrcodetest_cmd(int argc, char *argv)
 {
 	/*
@@ -213,9 +251,10 @@ const static_cmd_st static_cmd[] =
 		{"test", shell_test_cmd, NULL},
 		{"lvgl", shell_lvgl_cmd, "lvgl test command"},
 		{"audio", shell_audio_cmd, "audio test command"},
-		{"cbor",shell_cbor_cmd,"cbor test command"},
-		{"hmac",shell_hmac_cmd,"hmac test command"},
-		{"qrtest",shell_libqrcodetest_cmd,"qrcode test command"},
+		{"cbor", shell_cbor_cmd,"cbor test command"},
+		{"hmac", shell_hmac_cmd,"hmac test command"},
+		{"qrtest", shell_libqrcodetest_cmd,"qrcode test command"},
+		{"ecctest", shell_ecctest_cmd,"ecc test command"},
 		{"\0", NULL, NULL}};
 #endif
 

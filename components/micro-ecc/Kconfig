@@ -1,0 +1,7 @@
+menuconfig MICROECC
+    bool "MICRO-ECC"
+    default y
+
+if MICROECC
+
+endif

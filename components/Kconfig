@@ -12,4 +12,5 @@ source "$SDK_BASE/components/mbedtls/Kconfig"
 source "$SDK_BASE/components/dlg/Kconfig"
 source "$SDK_BASE/components/libqrencode/Kconfig"
 source "$SDK_BASE/components/LinkSDK/Kconfig"
+source "$SDK_BASE/components/micro-ecc/Kconfig"
 endmenu
