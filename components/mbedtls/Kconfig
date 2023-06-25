@@ -1,6 +1,6 @@
 menuconfig MBEDTLS
     bool "mbedtls"
-    default y
+    default n
 
 if MBEDTLS
 

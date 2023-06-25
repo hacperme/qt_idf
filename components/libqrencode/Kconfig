@@ -1,6 +1,6 @@
 menuconfig LIBQRENCODE
     bool "libqrenc"
-    default y
+    default n
 
 if LIBQRENCODE
 

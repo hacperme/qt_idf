@@ -1,6 +1,6 @@
 menuconfig LinkSDK
     bool "LinkSDK"
-    default y
+    default n
 
 if LinkSDK
 

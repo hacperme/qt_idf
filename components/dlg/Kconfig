@@ -1,6 +1,6 @@
 menuconfig DLG
     bool "dlg"
-    default y
+    default n
 
 if DLG
 
