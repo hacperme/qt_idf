@@ -5,7 +5,7 @@ sdk_add_compile_definitions("-DHAVE_CONFIG_H")
 
 # file(GLOB_RECURSE SOURCES src/*.c)
 set(SOURCES
-    wolfcrypt/benchmark/benchmark.c
+    # wolfcrypt/benchmark/benchmark.c
     wolfcrypt/src/hmac.c
     wolfcrypt/src/hash.c
     wolfcrypt/src/cpuid.c
