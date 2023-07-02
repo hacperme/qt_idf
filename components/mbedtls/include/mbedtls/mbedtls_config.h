@@ -1604,7 +1604,7 @@
  *
  * Uncomment this macro to enable the support for TLS 1.3.
  */
-// #define MBEDTLS_SSL_PROTO_TLS1_3
+#define MBEDTLS_SSL_PROTO_TLS1_3
 
 /**
  * \def MBEDTLS_SSL_TLS1_3_COMPATIBILITY_MODE
@@ -1626,7 +1626,7 @@
  * effect on the build.
  *
  */
-//#define MBEDTLS_SSL_TLS1_3_COMPATIBILITY_MODE
+#define MBEDTLS_SSL_TLS1_3_COMPATIBILITY_MODE
 
 /**
  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
@@ -1685,7 +1685,7 @@
  * production.
  *
  */
-//#define MBEDTLS_SSL_EARLY_DATA
+#define MBEDTLS_SSL_EARLY_DATA
 
 /**
  * \def MBEDTLS_SSL_MAX_EARLY_DATA_SIZE
@@ -1940,7 +1940,7 @@
  *
  * Uncomment this to enable internal use of PSA Crypto and new associated APIs.
  */
-//#define MBEDTLS_USE_PSA_CRYPTO
+#define MBEDTLS_USE_PSA_CRYPTO
 
 /**
  * \def MBEDTLS_PSA_CRYPTO_CONFIG
@@ -1965,7 +1965,7 @@
  * This feature is still experimental and is not ready for production since
  * it is not completed.
  */
-//#define MBEDTLS_PSA_CRYPTO_CONFIG
+#define MBEDTLS_PSA_CRYPTO_CONFIG
 
 /**
  * \def MBEDTLS_VERSION_FEATURES
