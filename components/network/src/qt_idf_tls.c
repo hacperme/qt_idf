@@ -373,15 +373,22 @@ int qtf_tls_recv(void *handle, void *buf, uint32_t len, uint32_t timeout_ms)
 
     return ret;
 }
+
 int qtf_tls_close(void *handle)
 {
+    int ret = 0;
     qtf_tls_handle_t *tls_handle = (qtf_tls_handle_t *)handle;
 
-    if(!handle)
+    if (!handle)
     {
         dlg_error("invalid param");
         return -1;
     }
+
+    do
+    {
+        ret = mbedtls_ssl_close_notify(&(tls_handle->ssl));
+    } while (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
     __tls_net_deinit(tls_handle);
     free(tls_handle);
