@@ -96,7 +96,7 @@ make clean
 - [ ] 加密套件
   - [x] mbedtls
   - [ ] wolfssl
-  - [ ] micro-ecc
+  - [x] micro-ecc
   - [ ] TOTP
 - [ ] 构建工具
   - [x] windows_x86_mingw_gcc

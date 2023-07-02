@@ -1,0 +1,7 @@
+menuconfig LinkSDK
+    bool "LinkSDK"
+    default n
+
+if LinkSDK
+
+endif

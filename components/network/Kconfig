@@ -1,0 +1,9 @@
+menuconfig network
+    bool "network"
+    depends on MBEDTLS
+    depends on DLG
+    default n
+
+if network
+
+endif

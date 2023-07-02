@@ -1,0 +1,7 @@
+menuconfig DLG
+    bool "dlg"
+    default n
+
+if DLG
+
+endif

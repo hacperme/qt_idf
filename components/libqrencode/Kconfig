@@ -1,0 +1,7 @@
+menuconfig LIBQRENCODE
+    bool "libqrenc"
+    default n
+
+if LIBQRENCODE
+
+endif
