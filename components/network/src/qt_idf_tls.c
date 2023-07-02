@@ -51,10 +51,9 @@ typedef struct
 }qtf_tls_handle_t;
 
 #if defined(MBEDTLS_DEBUG_C)
-#define DEBUG_LEVEL 0
 static void _ssl_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
-    dlg_debug("[mbedTLS]:[%s]:[%d]: %s\r\n", (file), line, (str));
+    printf("[mbedTLS]:[%s]:[%d]: %s\r\n", (file), line, (str));
 }
 
 #endif
@@ -96,9 +95,26 @@ static int _tls_net_init(qtf_tls_handle_t *handle, qtf_tls_conn_param_t *param)
     mbedtls_entropy_init(&(handle->entropy));
 
 #if defined(MBEDTLS_DEBUG_C)
-    mbedtls_debug_set_threshold(DEBUG_LEVEL);
+    mbedtls_debug_set_threshold(param->debug_level);
     mbedtls_ssl_conf_dbg(&handle->ssl_conf, _ssl_debug, NULL);
 #endif
+
+#if defined(MBEDTLS_USE_PSA_CRYPTO) || defined(MBEDTLS_SSL_PROTO_TLS1_3)
+    ret = psa_crypto_init();
+    if (ret != PSA_SUCCESS)
+    {
+        dlg_error("psa_crypto_init failed");
+        goto error;
+    }
+#endif
+
+    ret = mbedtls_ssl_conf_max_frag_len(&(handle->ssl_conf), param->max_frag_len);
+    if (ret != 0)
+    {
+        dlg_error("mbedtls_ssl_conf_max_frag_len failed");
+        goto error;
+    }
+
 
     ret = mbedtls_ctr_drbg_seed(&(handle->ctr_drbg), mbedtls_entropy_func, &(handle->entropy), NULL, 0);
     if (ret != 0)
@@ -246,14 +262,26 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
 
     mbedtls_ssl_conf_authmode(&(handle->ssl_conf), param->verify_mode);
 
-    mbedtls_ssl_conf_max_version(&(handle->ssl_conf), MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_min_version(&(handle->ssl_conf), MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+    if(param->tls_version == QTF_TLS_VERSION_TLS1_2)
+    {
+        mbedtls_ssl_conf_max_tls_version(&(handle->ssl_conf), MBEDTLS_SSL_VERSION_TLS1_2);
+        mbedtls_ssl_conf_min_tls_version(&(handle->ssl_conf), MBEDTLS_SSL_VERSION_TLS1_2);
+    }
+    else if(param->tls_version == QTF_TLS_VERSION_TLS1_3)
+    {
+        mbedtls_ssl_conf_max_tls_version(&(handle->ssl_conf), MBEDTLS_SSL_VERSION_TLS1_3);
+        mbedtls_ssl_conf_min_tls_version(&(handle->ssl_conf), MBEDTLS_SSL_VERSION_TLS1_3);
+    }
+    else
+    {
+        mbedtls_ssl_conf_max_tls_version(&(handle->ssl_conf), MBEDTLS_SSL_VERSION_TLS1_3);
+        mbedtls_ssl_conf_min_tls_version(&(handle->ssl_conf), MBEDTLS_SSL_VERSION_TLS1_2);
+    }
+
 
     mbedtls_ssl_conf_rng(&(handle->ssl_conf), mbedtls_ctr_drbg_random, &(handle->ctr_drbg));
 
     // todo: config ciphersuites
-
-    // todo: config max_tls_fragment
 
     ret = mbedtls_ssl_setup(&(handle->ssl), &(handle->ssl_conf));
     if (ret != 0)
@@ -282,9 +310,9 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
     }
 
     ret = mbedtls_ssl_get_verify_result(&(handle->ssl));
-    if (ret != 0)
+    if (ret < 0)
     {
-        dlg_error("mbedtls_ssl_get_verify_result ret: %x\r\n", (unsigned int)&ret);
+        dlg_error("mbedtls_ssl_get_verify_result  0x%04x", ret < 0 ? -ret : ret);
         goto error;
     }
 

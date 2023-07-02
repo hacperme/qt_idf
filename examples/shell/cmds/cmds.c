@@ -249,6 +249,11 @@ void shell_tlstest_cmd(int argc, char *argv)
 	void *tls_handle = NULL;
 	char recv_buf[1024] = {0};
 	int ret = 0;
+
+	const char request[] = "GET /get?a=1 HTTP/1.1\r\n"
+		"Host: httpbin.org\r\n"
+		"Connection: close\r\n"
+		"\r\n";
 	const char *test_ca_cert =
 		{
 
@@ -274,7 +279,7 @@ void shell_tlstest_cmd(int argc, char *argv)
 			"HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==\r\n"
 			"-----END CERTIFICATE-----"};
 	tls_param.auth_mode = QTF_TLS_AUTH_MODE_CERT;
-	tls_param.verify_mode = QTF_TLS_VERIFY_MODE_REQUIRED;
+	tls_param.verify_mode = QTF_TLS_VERIFY_MODE_OPTIONAL;
 	tls_param.hanshake_timeout_ms = 10000;
 	tls_param.ca_cert = test_ca_cert;
 	tls_param.ca_cert_len = strlen(test_ca_cert);
@@ -287,8 +292,11 @@ void shell_tlstest_cmd(int argc, char *argv)
 	tls_param.psk = NULL;
 	tls_param.psk_len = 0;
 	tls_param.psk_id = NULL;
+	tls_param.debug_level = QTF_TLS_DEBUG_LEVEL_ERROR;
+	tls_param.tls_version = QTF_TLS_VERSION_TLS1_2;
+	tls_param.max_frag_len = QTF_TLS_MAX_FRAG_LEN_NO_USE;
 
-	tls_handle = qtf_tls_connect("a1ox6SbM4ri.iot-as-mqtt.cn-shanghai.aliyuncs.com", 443, &tls_param);
+	tls_handle = qtf_tls_connect("httpbin.org", 443, &tls_param);
 	if(tls_handle)
 	{
 		shell_printf("tls connect success\r\n");
@@ -299,7 +307,7 @@ void shell_tlstest_cmd(int argc, char *argv)
 		return;
 	}
 
-	ret = qtf_tls_send(tls_handle, "hello world", strlen("hello world"), 1000);
+	ret = qtf_tls_send(tls_handle, request, strlen(request), 1000);
 	if(ret > 0)
 	{
 		shell_printf("tls send success\r\n");

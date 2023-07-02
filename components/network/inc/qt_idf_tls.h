@@ -35,16 +35,45 @@ typedef enum
 
 typedef enum
 {
+    QTF_TLS_VERSION_TLS1_2 = 0,     // TLS v1.2
+    QTF_TLS_VERSION_TLS1_3,         // TLS v1.3
+    QTF_TLS_VERSION_TLS1_2_1_3,     // TLS v1.2 and TLS v1.3
+    QTF_TLS_VERSION_MAX
+}qtf_tls_version_t;
+
+typedef enum
+{
     QTF_TLS_VERIFY_MODE_NONE = 0,
     QTF_TLS_VERIFY_MODE_OPTIONAL,
     QTF_TLS_VERIFY_MODE_REQUIRED,
     QTF_TLS_VERIFY_MODE_MAX
 }qtf_tls_verify_mode_t;
 
+typedef enum
+{
+    QTF_TLS_DEBUG_LEVEL_NONE = 0,
+    QTF_TLS_DEBUG_LEVEL_ERROR,
+    QTF_TLS_DEBUG_LEVEL_STATE,
+    QTF_TLS_DEBUG_LEVEL_INFO,
+    QTF_TLS_DEBUG_LEVEL_VERBOSE,
+}qtf_tls_debug_level_t;
+
+typedef enum
+{
+    QTF_TLS_MAX_FRAG_LEN_NO_USE = 0,
+    QTF_TLS_MAX_FRAG_LEN_512,
+    QTF_TLS_MAX_FRAG_LEN_1024,
+    QTF_TLS_MAX_FRAG_LEN_2048,
+    QTF_TLS_MAX_FRAG_LEN_4096,
+}qtf_tls_max_frag_len_t;
+
 typedef struct
 {
     qtf_tls_auth_mode_t auth_mode;
     qtf_tls_verify_mode_t verify_mode;
+    qtf_tls_version_t tls_version;
+    qtf_tls_debug_level_t debug_level;
+    qtf_tls_max_frag_len_t max_frag_len;
     uint32_t hanshake_timeout_ms;
     const char *ca_cert;
     uint32_t ca_cert_len;
