@@ -1,9 +1,9 @@
-menuconfig network
-    bool "network"
+menuconfig NETWORK
+    bool "NETWORK"
     depends on MBEDTLS
     depends on DLG
     default n
 
-if network
+if NETWORK
 
 endif
