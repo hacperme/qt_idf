@@ -26,7 +26,9 @@
 #include <string.h>
 
 #include "qt_idf_tls.h"
+#include "qt_idf_tcp.h"
 #include "dlg/dlg.h"
+#include "utils_timer.h"
 
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl.h"
@@ -60,26 +62,13 @@ static void _ssl_debug(void *ctx, int level, const char *file, int line, const c
 
 static int _mbedtls_tcp_connect(mbedtls_net_context *ctx, const char *host, uint16_t port)
 {
-    int ret = 0;
-    char port_str[6] = {0};
-
-    snprintf(port_str, sizeof(port_str), "%d", port);
-
-    ret = mbedtls_net_connect(ctx, host, port_str, MBEDTLS_NET_PROTO_TCP);
-    if(ret != 0)
+    ctx->fd = (int)qtf_tcp_connect(host, port);
+    if (ctx->fd <= 0)
     {
-        dlg_error("mbedtls_net_connect connect failed returned 0x%04x errno: %d", ret < 0 ? -ret : ret, errno);
-       
-        return ret;
+        dlg_error("qtf_tcp_connect failed");
+        return -1;
     }
-
-    ret = mbedtls_net_set_block(ctx);
-    if(ret != 0)
-    {
-        dlg_error("mbedtls_net_set_block failed returned 0x%04x errno: %d", ret < 0 ? -ret : ret, errno);
-        return ret;
-    }
-
+    
     return 0;
 }
 
@@ -210,7 +199,8 @@ error:
 
 static int __tls_net_deinit(qtf_tls_handle_t *handle)
 {
-    mbedtls_net_free(&(handle->socket_fd));
+
+    qtf_tcp_close((void *)handle->socket_fd.fd);
     mbedtls_ssl_free(&(handle->ssl));
     mbedtls_ssl_config_free(&(handle->ssl_conf));
     mbedtls_ctr_drbg_free(&(handle->ctr_drbg));
@@ -220,6 +210,51 @@ static int __tls_net_deinit(qtf_tls_handle_t *handle)
     mbedtls_pk_free(&(handle->private_key));
 
     return 0;
+}
+
+static int __tls_net_send(void *ctx, const unsigned char *buf, size_t len)
+{
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+    int fd = ((mbedtls_net_context *) ctx)->fd;
+
+    ret = qtf_tcp_send((void *)fd, (const char *)buf, len, 0);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_send failed");
+        return MBEDTLS_ERR_NET_SEND_FAILED;
+    }
+
+    return ret;
+}
+
+static int __tls_net_recv(void *ctx, unsigned char *buf, size_t len)
+{
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+    int fd = ((mbedtls_net_context *) ctx)->fd;
+
+    ret = qtf_tcp_recv((void *)fd, (char *)buf, len, 0);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_recv failed");
+        return MBEDTLS_ERR_NET_RECV_FAILED;
+    }
+
+    return ret;
+}
+
+static int __tls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len, uint32_t timeout_ms)
+{
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+    int fd = ((mbedtls_net_context *) ctx)->fd;
+
+    ret = qtf_tcp_recv((void *)fd, (char *)buf, len, timeout_ms);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_recv failed");
+        return MBEDTLS_ERR_NET_RECV_FAILED;
+    }
+
+    return ret;
 }
 
 void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *param)
@@ -290,7 +325,7 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
         goto error;
     }
 
-    mbedtls_ssl_set_bio(&(handle->ssl), &(handle->socket_fd), mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout);
+    mbedtls_ssl_set_bio(&(handle->ssl), &(handle->socket_fd), __tls_net_send, __tls_net_recv, __tls_net_recv_timeout);
 
     ret = mbedtls_ssl_set_hostname(&(handle->ssl), host);
     if (ret != 0)
@@ -333,6 +368,8 @@ int qtf_tls_send(void *handle, const void *buf, uint32_t len, uint32_t timeout_m
 {
     qtf_tls_handle_t *tls_handle = (qtf_tls_handle_t *)handle;
     int ret = 0;
+    int send_len = 0;
+    timer_t timer;
 
     if(!handle || !buf || !len)
     {
@@ -340,21 +377,36 @@ int qtf_tls_send(void *handle, const void *buf, uint32_t len, uint32_t timeout_m
         return -1;
     }
 
-    while ((ret = mbedtls_ssl_write(&(tls_handle->ssl), (const unsigned char *)buf, len)) <= 0)
+    qtf_timer_init(&timer);
+    qtf_timer_countdown_ms(&timer, timeout_ms);
+
+    do
     {
-        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
+        ret = mbedtls_ssl_write(&(tls_handle->ssl), (const unsigned char *)buf + send_len, len - send_len);
+        if (ret > 0)
+        {
+            send_len += ret;
+        }
+        else if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
         {
             dlg_error("mbedtls_ssl_write failed 0x%04x", ret < 0 ? -ret : ret);
-            return -1;
+            break;
         }
-    }
+    } while (send_len < len && !qtf_timer_expired(&timer));
 
-    return ret;
+    if(send_len == 0)
+    {
+        return -1;
+    }
+    
+    return send_len;
 }
 int qtf_tls_recv(void *handle, void *buf, uint32_t len, uint32_t timeout_ms)
 {
     qtf_tls_handle_t *tls_handle = (qtf_tls_handle_t *)handle;
     int ret = 0;
+    timer_t timer;
+    int recv_len = 0;
 
     if(!handle || !buf || !len)
     {
@@ -362,16 +414,31 @@ int qtf_tls_recv(void *handle, void *buf, uint32_t len, uint32_t timeout_ms)
         return -1;
     }
 
-    while ((ret = mbedtls_ssl_read(&(tls_handle->ssl), (unsigned char *)buf, len)) <= 0)
+    qtf_timer_init(&timer);
+    qtf_timer_countdown_ms(&timer, timeout_ms);
+
+    mbedtls_ssl_conf_read_timeout(&(tls_handle->ssl_conf), timeout_ms);
+
+    do
     {
-        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
-        {
+       ret = mbedtls_ssl_read(&(tls_handle->ssl), (unsigned char *)buf + recv_len, len - recv_len);
+         if (ret > 0)
+         {
+              recv_len += ret;
+         }
+         else if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
+         {
             dlg_error("mbedtls_ssl_read failed 0x%04x", ret < 0 ? -ret : ret);
-            return -1;
-        }
+             break;
+         }
+    } while (recv_len < len && !qtf_timer_expired(&timer));
+    
+    if(recv_len == 0)
+    {
+        return -1;
     }
 
-    return ret;
+    return recv_len;
 }
 
 int qtf_tls_close(void *handle)

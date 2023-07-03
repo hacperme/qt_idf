@@ -2,6 +2,7 @@ menuconfig NETWORK
     bool "NETWORK"
     depends on MBEDTLS
     depends on DLG
+    depends on UTILS
     default n
 
 if NETWORK
