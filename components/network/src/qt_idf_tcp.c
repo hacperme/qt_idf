@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+#include "qt_idf_config.h"
 #include "qt_idf_tcp.h"
 #include "utils_timer.h"
 #include "dlg/dlg.h"
@@ -36,6 +37,8 @@ extern "C" {
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <Windows.h>
+
+#ifdef CONFIG_NETWORK_TCP_ENABLE
 
 void *qtf_tcp_connect(const char *host, int port)
 {
@@ -280,6 +283,7 @@ void qtf_tcp_close(void *ctx)
     WSACleanup();
 }
 
+#endif /* CONFIG_NETWORK_TCP_ENABLE */
 
 #ifdef __cplusplus
 } /*"C" */

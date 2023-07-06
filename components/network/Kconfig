@@ -1,10 +1,32 @@
-menuconfig NETWORK
+menu "network configuration"
+
+config NETWORK
     bool "NETWORK"
-    depends on MBEDTLS
     depends on DLG
     depends on UTILS
     default n
 
 if NETWORK
 
+    config NETWORK_TCP_ENABLE
+        bool "ENANBLE TCP"
+        default y
+
+choice
+    prompt "TLS bankend choice" 
+    default NETWORK_MBEDTLS_TLS_ENABLE
+    config NETWORK_MBEDTLS_TLS_ENABLE
+        bool "ENANBLE MBEDTLS TLS"
+        depends on MBEDTLS
+        depends on NETWORK_TCP_ENABLE
+
+    config NETWORK_WOLFSSL_TLS_ENABLE
+        bool "ENANBLE WOLFSSL TLS"
+        depends on WOLFSSL
+        depends on NETWORK_TCP_ENABLE
+        
+endchoice
+
 endif
+
+endmenu

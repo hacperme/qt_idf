@@ -21,6 +21,8 @@
  * =================================================================================
  */
 
+#include "qt_idf_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +31,7 @@
 #include "qt_idf_tcp.h"
 #include "dlg/dlg.h"
 #include "utils_timer.h"
-
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/ctr_drbg.h"
@@ -38,10 +40,11 @@
 #include "mbedtls/timing.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/error.h"
-
+#endif
 
 typedef struct
 {
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     mbedtls_net_context      socket_fd;
     mbedtls_entropy_context  entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
@@ -50,8 +53,10 @@ typedef struct
     mbedtls_x509_crt         ca_cert;
     mbedtls_x509_crt         client_cert;
     mbedtls_pk_context       private_key;
+#endif
 }qtf_tls_handle_t;
 
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
 #if defined(MBEDTLS_DEBUG_C)
 static void _ssl_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
@@ -72,10 +77,13 @@ static int _mbedtls_tcp_connect(mbedtls_net_context *ctx, const char *host, uint
     return 0;
 }
 
+#endif
+
 static int _tls_net_init(qtf_tls_handle_t *handle, qtf_tls_conn_param_t *param)
 {
     int ret = -1;
 
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     mbedtls_net_init(&(handle->socket_fd));
     mbedtls_ssl_init(&(handle->ssl));
     mbedtls_ssl_config_init(&(handle->ssl_conf));
@@ -187,7 +195,7 @@ static int _tls_net_init(qtf_tls_handle_t *handle, qtf_tls_conn_param_t *param)
     }
 
     
-
+#endif
 
     return ret;
 
@@ -200,6 +208,7 @@ error:
 static int __tls_net_deinit(qtf_tls_handle_t *handle)
 {
 
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     qtf_tcp_close((void *)handle->socket_fd.fd);
     mbedtls_ssl_free(&(handle->ssl));
     mbedtls_ssl_config_free(&(handle->ssl_conf));
@@ -208,15 +217,16 @@ static int __tls_net_deinit(qtf_tls_handle_t *handle)
     mbedtls_x509_crt_free(&(handle->ca_cert));
     mbedtls_x509_crt_free(&(handle->client_cert));
     mbedtls_pk_free(&(handle->private_key));
-
+#endif
     return 0;
 }
 
 static int __tls_net_send(void *ctx, const unsigned char *buf, size_t len)
 {
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     int fd = ((mbedtls_net_context *) ctx)->fd;
-
+#endif
     ret = qtf_tcp_send((void *)fd, (const char *)buf, len, 0);
     if (ret < 0)
     {
@@ -229,9 +239,10 @@ static int __tls_net_send(void *ctx, const unsigned char *buf, size_t len)
 
 static int __tls_net_recv(void *ctx, unsigned char *buf, size_t len)
 {
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     int fd = ((mbedtls_net_context *) ctx)->fd;
-
+#endif
     ret = qtf_tcp_recv((void *)fd, (char *)buf, len, 0);
     if (ret < 0)
     {
@@ -245,7 +256,9 @@ static int __tls_net_recv(void *ctx, unsigned char *buf, size_t len)
 static int __tls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len, uint32_t timeout_ms)
 {
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     int fd = ((mbedtls_net_context *) ctx)->fd;
+#endif
 
     ret = qtf_tcp_recv((void *)fd, (char *)buf, len, timeout_ms);
     if (ret < 0)
@@ -283,7 +296,7 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
     }
 
     dlg_info("Connecting to %s:%d...", host, port);
-
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     ret = _mbedtls_tcp_connect(&(handle->socket_fd), host, port);
     if (ret != 0)
     {
@@ -350,6 +363,7 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
         dlg_error("mbedtls_ssl_get_verify_result  0x%04x", ret < 0 ? -ret : ret);
         goto error;
     }
+#endif
 
     return handle;
 
@@ -382,7 +396,9 @@ int qtf_tls_send(void *handle, const void *buf, uint32_t len, uint32_t timeout_m
 
     do
     {
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
         ret = mbedtls_ssl_write(&(tls_handle->ssl), (const unsigned char *)buf + send_len, len - send_len);
+#endif
         if (ret > 0)
         {
             send_len += ret;
@@ -416,12 +432,14 @@ int qtf_tls_recv(void *handle, void *buf, uint32_t len, uint32_t timeout_ms)
 
     qtf_timer_init(&timer);
     qtf_timer_countdown_ms(&timer, timeout_ms);
-
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     mbedtls_ssl_conf_read_timeout(&(tls_handle->ssl_conf), timeout_ms);
-
+#endif
     do
     {
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
        ret = mbedtls_ssl_read(&(tls_handle->ssl), (unsigned char *)buf + recv_len, len - recv_len);
+#endif
          if (ret > 0)
          {
               recv_len += ret;
@@ -451,12 +469,12 @@ int qtf_tls_close(void *handle)
         dlg_error("invalid param");
         return -1;
     }
-
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     do
     {
         ret = mbedtls_ssl_close_notify(&(tls_handle->ssl));
     } while (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE);
-
+#endif
     __tls_net_deinit(tls_handle);
     free(tls_handle);
 
