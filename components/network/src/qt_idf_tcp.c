@@ -92,7 +92,7 @@ void *qtf_tcp_connect(const char *host, int port)
      }
      else
      {
-        dlg_info("connect to %s:%d success: %d", host, port, ret);
+        dlg_info("connect to %s:%d success fd:%d", host, port, ret);
      }
 
     freeaddrinfo(addr_list);
