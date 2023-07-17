@@ -28,17 +28,19 @@ qt_idf 是一套在 PC 上调试和开发物联网相关功能组件的开发环
 
 
 
-打开根目录的cmd，执行编译指令：
+打开 cmd 或者 power shell，执行编译指令：
 
 ```bat
-# 设置编译环境
+# cmd 设置编译环境
 env
 
-# 加载不同平台的编译配置，目前只有Windows平台的编译工具链
-config
+#powershell 设置环境变量
+$env:path=&".\env.bat"
 
+#切换到例程路径
+cd examples
 # 编译
-make -j32
+make
 
 # 清理
 make clean
@@ -95,7 +97,7 @@ make clean
 - [ ] OSA 
 - [ ] 加密套件
   - [x] mbedtls
-  - [ ] wolfssl
+  - [x] wolfssl
   - [x] micro-ecc
   - [ ] TOTP
 - [ ] 构建工具
