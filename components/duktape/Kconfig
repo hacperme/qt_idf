@@ -1,0 +1,7 @@
+menuconfig DUKTAPE
+    bool "duktape"
+    default n
+
+if DUKTAPE
+
+endif

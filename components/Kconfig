@@ -16,4 +16,5 @@ source "$SDK_BASE/components/micro-ecc/Kconfig"
 source "$SDK_BASE/components/network/Kconfig"
 source "$SDK_BASE/components/wolfssl/Kconfig"
 source "$SDK_BASE/components/utils/Kconfig"
+source "$SDK_BASE/components/duktape/Kconfig"
 endmenu
