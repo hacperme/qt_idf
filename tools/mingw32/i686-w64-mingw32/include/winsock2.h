@@ -88,10 +88,15 @@ extern "C" {
 #define IPPROTO_IGMP 2
 #define IPPROTO_GGP 3
 #define IPPROTO_IPV4 4
+#define IPPROTO_ST 5
 #define IPPROTO_TCP 6
+#define IPPROTO_CBT 7
+#define IPPROTO_EGP 8
+#define IPPROTO_IGP 9
 #define IPPROTO_PUP 12
 #define IPPROTO_UDP 17
 #define IPPROTO_IDP 22
+#define IPPROTO_RDP 27
 #define IPPROTO_IPV6 41
 #define IPPROTO_ROUTING 43
 #define IPPROTO_FRAGMENT 44
@@ -102,6 +107,10 @@ extern "C" {
 #define IPPROTO_DSTOPTS 60
 #define IPPROTO_ND 77
 #define IPPROTO_ICLFXBM 78
+#define IPPROTO_PIM 103
+#define IPPROTO_PGM 113
+#define IPPROTO_L2TP 115
+#define IPPROTO_SCTP 132
 
 #define IPPROTO_RAW 255
 #define IPPROTO_MAX 256
@@ -301,7 +310,14 @@ extern "C" {
 #define MSG_OOB 0x1
 #define MSG_PEEK 0x2
 #define MSG_DONTROUTE 0x4
+
+#if(_WIN32_WINNT >= 0x0502)
 #define MSG_WAITALL 0x8
+#endif
+
+#if(_WIN32_WINNT >= 0x0603)
+#define MSG_PUSH_IMMEDIATE 0x20
+#endif
 
 #define MSG_PARTIAL 0x8000
 
@@ -468,6 +484,7 @@ typedef unsigned int GROUP;
 #define PFL_RECOMMENDED_PROTO_ENTRY 0x00000002
 #define PFL_HIDDEN 0x00000004
 #define PFL_MATCHES_PROTOCOL_ZERO 0x00000008
+#define PFL_NETWORKDIRECT_PROVIDER 0x00000010
 
 #define XP1_CONNECTIONLESS 0x00000001
 #define XP1_GUARANTEED_DELIVERY 0x00000002
@@ -488,6 +505,7 @@ typedef unsigned int GROUP;
 #define XP1_UNI_RECV 0x00010000
 #define XP1_IFS_HANDLES 0x00020000
 #define XP1_PARTIAL_MESSAGE 0x00040000
+#define XP1_SAN_SUPPORT_SDP 0x00080000
 
 #define BIGENDIAN 0x0000
 #define LITTLEENDIAN 0x0001
@@ -503,6 +521,9 @@ typedef unsigned int GROUP;
 #define WSA_FLAG_MULTIPOINT_C_LEAF 0x04
 #define WSA_FLAG_MULTIPOINT_D_ROOT 0x08
 #define WSA_FLAG_MULTIPOINT_D_LEAF 0x10
+#define WSA_FLAG_ACCESS_SYSTEM_SECURITY 0x40
+#define WSA_FLAG_NO_HANDLE_INHERIT 0x80
+#define WSA_FLAG_REGISTERED_IO 0x100
 
 #define IOC_UNIX 0x00000000
 #define IOC_WS2 0x08000000
@@ -607,7 +628,9 @@ typedef unsigned int GROUP;
 #define NS_DNS (12)
 #define NS_NETBT (13)
 #define NS_WINS (14)
+#if(_WIN32_WINNT >= 0x0501)
 #define NS_NLA (15)
+#endif
 #if (_WIN32_WINNT >= 0x0600)
 #define NS_BTH (16)
 #endif
@@ -754,17 +777,24 @@ typedef unsigned int GROUP;
 #define LUP_NON_AUTHORITATIVE 0x4000
 #define LUP_SECURE 0x8000
 #define LUP_RETURN_PREFERRED_NAMES 0x10000
+#define LUP_DNS_ONLY 0x20000
 
 #define LUP_ADDRCONFIG 0x100000
 #define LUP_DUAL_ADDR 0x200000
 #define LUP_FILESERVER 0x400000
+#define LUP_DISABLE_IDN_ENCODING 0x00800000
+#define LUP_API_ANSI 0x01000000
+
+#define LUP_RESOLUTION_HANDLE 0x80000000
 
 #define LUP_RES_RESERVICE 0x8000 /* FIXME: not in PSDK anymore?? */
 
 #define RESULT_IS_ALIAS 0x0001
+#if(_WIN32_WINNT >= 0x0501)
 #define RESULT_IS_ADDED 0x0010
 #define RESULT_IS_CHANGED 0x0020
 #define RESULT_IS_DELETED 0x0040
+#endif
 
   typedef enum _WSAESETSERVICEOP {
     RNRSERVICE_REGISTER = 0,
@@ -873,7 +903,7 @@ typedef unsigned int GROUP;
   typedef u_short (WSAAPI *LPFN_NTOHS)(u_short netshort);
   typedef int (WSAAPI *LPFN_RECV)(SOCKET s,char *buf,int len,int flags);
   typedef int (WSAAPI *LPFN_RECVFROM)(SOCKET s,char *buf,int len,int flags,struct sockaddr *from,int *fromlen);
-  typedef int (WSAAPI *LPFN_SELECT)(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,const PTIMEVAL timeout);
+  typedef int (WSAAPI *LPFN_SELECT)(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,const TIMEVAL *timeout);
   typedef int (WSAAPI *LPFN_SEND)(SOCKET s,const char *buf,int len,int flags);
   typedef int (WSAAPI *LPFN_SENDTO)(SOCKET s,const char *buf,int len,int flags,const struct sockaddr *to,int tolen);
   typedef int (WSAAPI *LPFN_SETSOCKOPT)(SOCKET s,int level,int optname,const char *optval,int optlen);
@@ -981,6 +1011,9 @@ typedef unsigned int GROUP;
 #ifndef __INSIDE_CYGWIN__
   WINSOCK_API_LINKAGE u_long WSAAPI htonl(u_long hostlong);
   WINSOCK_API_LINKAGE u_short WSAAPI htons(u_short hostshort);
+#if _WIN32_WINNT >= _WIN32_WINNT_WIN8
+  __forceinline unsigned __int64 htonll(unsigned __int64 Value) { return (((unsigned __int64)htonl(Value & 0xFFFFFFFFUL)) << 32) | htonl((u_long)(Value >> 32)); }
+#endif
 #endif /* !__INSIDE_CYGWIN__ */
   WINSOCK_API_LINKAGE unsigned __LONG32 WSAAPI inet_addr(const char *cp);
   WINSOCK_API_LINKAGE char *WSAAPI inet_ntoa(struct in_addr in);
@@ -988,11 +1021,14 @@ typedef unsigned int GROUP;
 #ifndef __INSIDE_CYGWIN__
   WINSOCK_API_LINKAGE u_long WSAAPI ntohl(u_long netlong);
   WINSOCK_API_LINKAGE u_short WSAAPI ntohs(u_short netshort);
+#if _WIN32_WINNT >= _WIN32_WINNT_WIN8
+  __forceinline unsigned __int64 ntohll(unsigned __int64 Value) { return (((unsigned __int64)ntohl(Value & 0xFFFFFFFFUL)) << 32) | ntohl((u_long)(Value >> 32)); }
+#endif
 #endif /* !__INSIDE_CYGWIN__ */
   WINSOCK_API_LINKAGE int WSAAPI recv(SOCKET s,char *buf,int len,int flags);
   WINSOCK_API_LINKAGE int WSAAPI recvfrom(SOCKET s,char *buf,int len,int flags,struct sockaddr *from,int *fromlen);
 #ifndef __INSIDE_CYGWIN__
-  WINSOCK_API_LINKAGE int WSAAPI select(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,const PTIMEVAL timeout);
+  WINSOCK_API_LINKAGE int WSAAPI select(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,const TIMEVAL *timeout);
 #endif /* !__INSIDE_CYGWIN__ */
   WINSOCK_API_LINKAGE int WSAAPI send(SOCKET s,const char *buf,int len,int flags);
   WINSOCK_API_LINKAGE int WSAAPI sendto(SOCKET s,const char *buf,int len,int flags,const struct sockaddr *to,int tolen);
@@ -1002,6 +1038,7 @@ typedef unsigned int GROUP;
   WINSOCK_API_LINKAGE struct hostent *WSAAPI gethostbyaddr(const char *addr,int len,int type);
   WINSOCK_API_LINKAGE struct hostent *WSAAPI gethostbyname(const char *name);
   WINSOCK_API_LINKAGE int WSAAPI gethostname(char *name,int namelen);
+  WINSOCK_API_LINKAGE int WSAAPI GetHostNameW(PWSTR name, int namelen);
   WINSOCK_API_LINKAGE struct servent *WSAAPI getservbyport(int port,const char *proto);
   WINSOCK_API_LINKAGE struct servent *WSAAPI getservbyname(const char *name,const char *proto);
   WINSOCK_API_LINKAGE struct protoent *WSAAPI getprotobynumber(int number);
@@ -1165,7 +1202,7 @@ WINSOCK_API_LINKAGE WINBOOL PASCAL WSAConnectByList(
   LPSOCKADDR LocalAddress,
   LPDWORD RemoteAddressLength,
   LPSOCKADDR RemoteAddress,
-  const PTIMEVAL timeout,
+  const TIMEVAL *timeout,
   LPWSAOVERLAPPED Reserved
 );
 
@@ -1177,7 +1214,7 @@ WINSOCK_API_LINKAGE WINBOOL PASCAL WSAConnectByNameA(
   LPSOCKADDR LocalAddress,
   LPDWORD RemoteAddressLength,
   LPSOCKADDR RemoteAddress,
-  const PTIMEVAL timeout,
+  const TIMEVAL *timeout,
   LPWSAOVERLAPPED Reserved
 );
 
@@ -1189,7 +1226,7 @@ WINSOCK_API_LINKAGE WINBOOL PASCAL WSAConnectByNameW(
   LPSOCKADDR LocalAddress,
   LPDWORD RemoteAddressLength,
   LPSOCKADDR RemoteAddress,
-  const PTIMEVAL timeout,
+  const TIMEVAL *timeout,
   LPWSAOVERLAPPED Reserved
 );
 #define WSAConnectByName __MINGW_NAME_AW(WSAConnectByName)
@@ -1220,6 +1257,53 @@ int WSAAPI WSASendMsg(
   LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
 );
 #endif /*(_WIN32_WINNT >= 0x0600)*/
+
+typedef struct SOCK_NOTIFY_REGISTRATION {
+    SOCKET socket;
+    PVOID completionKey;
+    UINT16 eventFilter;
+    UINT8 operation;
+    UINT8 triggerFlags;
+    DWORD registrationResult;
+} SOCK_NOTIFY_REGISTRATION;
+
+#define SOCK_NOTIFY_REGISTER_EVENT_NONE     0x00
+#define SOCK_NOTIFY_REGISTER_EVENT_IN       0x01
+#define SOCK_NOTIFY_REGISTER_EVENT_OUT      0x02
+#define SOCK_NOTIFY_REGISTER_EVENT_HANGUP   0x04
+
+#define SOCK_NOTIFY_REGISTER_EVENTS_ALL (SOCK_NOTIFY_REGISTER_EVENT_IN | SOCK_NOTIFY_REGISTER_EVENT_OUT | SOCK_NOTIFY_REGISTER_EVENT_HANGUP)
+
+#define SOCK_NOTIFY_EVENT_IN        SOCK_NOTIFY_REGISTER_EVENT_IN
+#define SOCK_NOTIFY_EVENT_OUT       SOCK_NOTIFY_REGISTER_EVENT_OUT
+#define SOCK_NOTIFY_EVENT_HANGUP    SOCK_NOTIFY_REGISTER_EVENT_HANGUP
+#define SOCK_NOTIFY_EVENT_ERR       0x40
+#define SOCK_NOTIFY_EVENT_REMOVE    0x80
+
+#define SOCK_NOTIFY_EVENTS_ALL (SOCK_NOTIFY_REGISTER_EVENTS_ALL | SOCK_NOTIFY_EVENT_ERR | SOCK_NOTIFY_EVENT_REMOVE)
+
+#define SOCK_NOTIFY_OP_NONE         0x00
+#define SOCK_NOTIFY_OP_ENABLE       0x01
+#define SOCK_NOTIFY_OP_DISABLE      0x02
+#define SOCK_NOTIFY_OP_REMOVE       0x04
+
+#define SOCK_NOTIFY_TRIGGER_ONESHOT    0x01
+#define SOCK_NOTIFY_TRIGGER_PERSISTENT 0x02
+#define SOCK_NOTIFY_TRIGGER_LEVEL      0x04
+#define SOCK_NOTIFY_TRIGGER_EDGE       0x08
+
+#define SOCK_NOTIFY_TRIGGER_ALL (SOCK_NOTIFY_TRIGGER_ONESHOT | SOCK_NOTIFY_TRIGGER_PERSISTENT | SOCK_NOTIFY_TRIGGER_LEVEL | SOCK_NOTIFY_TRIGGER_EDGE)
+
+#if (NTDDI_VERSION >= NTDDI_WIN10_MN)
+#if INCL_WINSOCK_API_PROTOTYPES
+  WINSOCK_API_LINKAGE DWORD WSAAPI ProcessSocketNotifications(HANDLE completionPort, UINT32 registrationCount, SOCK_NOTIFY_REGISTRATION* registrationInfos, UINT32 timeoutMs, ULONG completionCount, OVERLAPPED_ENTRY* completionPortEntries, UINT32* receivedEntryCount);
+
+#if !defined(__midl)
+  static FORCEINLINE UINT32 SocketNotificationRetrieveEvents(OVERLAPPED_ENTRY* notification) { return (UINT32)notification->dwNumberOfBytesTransferred; }
+#endif /* __midl */
+
+#endif /* INCL_WINSOCK_API_PROTOTYPES */
+#endif /* (NTDDI_VERSION >= NTDDI_WIN10_MN) */
 
 #ifdef __cplusplus
 }

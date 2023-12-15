@@ -66,6 +66,7 @@
 #include <process.h>
 #include <limits.h>
 #include <signal.h>
+#include <time.h>
 
 #include <sys/timeb.h>
 
@@ -82,14 +83,18 @@ extern "C" {
 /* MSB 8-bit major version, 8-bit minor version, 16-bit patch level.  */
 #define __WINPTHREADS_VERSION 0x00050000
 
-#if defined DLL_EXPORT
-#ifdef IN_WINPTHREAD
-#define WINPTHREAD_API __declspec(dllexport)
+#if defined(IN_WINPTHREAD)
+#  if defined(DLL_EXPORT)
+#    define WINPTHREAD_API  __declspec(dllexport)  /* building the DLL  */
+#  else
+#    define WINPTHREAD_API  /* building the static library  */
+#  endif
 #else
-#define WINPTHREAD_API __declspec(dllimport)
-#endif
-#else
-#define WINPTHREAD_API
+#  if defined(WINPTHREADS_USE_DLLIMPORT)
+#    define WINPTHREAD_API  __declspec(dllimport)  /* user wants explicit `dllimport`  */
+#  else
+#    define WINPTHREAD_API  /* the default; auto imported in case of DLL  */
+#  endif
 #endif
 
 /* #define WINPTHREAD_DBG 1 */
@@ -214,20 +219,6 @@ struct _pthread_cleanup
 #define pthread_cleanup_pop(E)\
     (*pthread_getclean() = _pthread_cup.next, ((E) ? (_pthread_cup.func((pthread_once_t *)_pthread_cup.arg)) : (void)0));}
 
-/* Windows doesn't have this, so declare it ourselves. */
-#ifndef _TIMESPEC_DEFINED
-#define _TIMESPEC_DEFINED
-struct timespec {
-  time_t  tv_sec;   /* Seconds */
-  long    tv_nsec;  /* Nanoseconds */
-};
-
-struct itimerspec {
-  struct timespec  it_interval;  /* Timer period */
-  struct timespec  it_value;     /* Timer expiration */
-};
-#endif
-
 #ifndef SCHED_OTHER
 /* Some POSIX realtime extensions, mostly stubbed */
 #define SCHED_OTHER     0
@@ -265,20 +256,20 @@ int WINPTHREAD_API pthread_attr_setschedpolicy (pthread_attr_t *attr, int pol);
 int WINPTHREAD_API pthread_attr_getschedpolicy (const pthread_attr_t *attr, int *pol);
 
 /* synchronization objects */
-typedef void	*pthread_spinlock_t;
-typedef void	*pthread_mutex_t;
-typedef void	*pthread_cond_t;
-typedef void	*pthread_rwlock_t;
+typedef intptr_t pthread_spinlock_t;
+typedef intptr_t pthread_mutex_t;
+typedef intptr_t pthread_cond_t;
+typedef intptr_t pthread_rwlock_t;
 typedef void	*pthread_barrier_t;
 
 #define PTHREAD_MUTEX_NORMAL 0
 #define PTHREAD_MUTEX_ERRORCHECK 1
 #define PTHREAD_MUTEX_RECURSIVE 2
 
-#define GENERIC_INITIALIZER				((void *) (size_t) -1)
-#define GENERIC_ERRORCHECK_INITIALIZER			((void *) (size_t) -2)
-#define GENERIC_RECURSIVE_INITIALIZER			((void *) (size_t) -3)
-#define GENERIC_NORMAL_INITIALIZER			((void *) (size_t) -1)
+#define GENERIC_INITIALIZER				-1
+#define GENERIC_ERRORCHECK_INITIALIZER			-2
+#define GENERIC_RECURSIVE_INITIALIZER			-3
+#define GENERIC_NORMAL_INITIALIZER			-1
 #define PTHREAD_MUTEX_INITIALIZER			(pthread_mutex_t)GENERIC_INITIALIZER
 #define PTHREAD_RECURSIVE_MUTEX_INITIALIZER		(pthread_mutex_t)GENERIC_RECURSIVE_INITIALIZER
 #define PTHREAD_ERRORCHECK_MUTEX_INITIALIZER		(pthread_mutex_t)GENERIC_ERRORCHECK_INITIALIZER
@@ -362,6 +353,8 @@ int WINPTHREAD_API pthread_attr_setinheritsched(pthread_attr_t *a, int flag);
 int WINPTHREAD_API pthread_attr_getinheritsched(const pthread_attr_t *a, int *flag);
 int WINPTHREAD_API pthread_attr_setscope(pthread_attr_t *a, int flag);
 int WINPTHREAD_API pthread_attr_getscope(const pthread_attr_t *a, int *flag);
+int WINPTHREAD_API pthread_attr_getstack(const pthread_attr_t *attr, void **stack, size_t *size);
+int WINPTHREAD_API pthread_attr_setstack(pthread_attr_t *attr, void *stack, size_t size);
 int WINPTHREAD_API pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stack);
 int WINPTHREAD_API pthread_attr_setstackaddr(pthread_attr_t *attr, void *stack);
 int WINPTHREAD_API pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *size);
@@ -404,7 +397,7 @@ int WINPTHREAD_API pthread_barrierattr_getpshared(void **attr, int *s);
 /* Private extensions for analysis and internal use.  */
 struct _pthread_cleanup ** WINPTHREAD_API pthread_getclean (void);
 void *                     WINPTHREAD_API pthread_gethandle (pthread_t t);
-void *                     WINPTHREAD_API pthread_getevent ();
+void *                     WINPTHREAD_API pthread_getevent (void);
 
 unsigned long long         WINPTHREAD_API _pthread_rel_time_in_ms(const struct timespec *ts);
 unsigned long long         WINPTHREAD_API _pthread_time_in_ms(void);

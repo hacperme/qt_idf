@@ -9,8 +9,6 @@
 
 #include <conio.h>
 
-#if defined(MINGW_HAS_SECURE_API)
-
 #if defined(__LIBMSVCRT__)
 /* When building mingw-w64, this should be blank.  */
 #define _SECIMP
@@ -18,7 +16,7 @@
 #ifndef _SECIMP
 #define _SECIMP __declspec(dllimport)
 #endif /* _SECIMP */
-#endif /* defined(_CRTBLD) || defined(__LIBMSVCRT__) */
+#endif /* defined(__LIBMSVCRT__) */
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,5 +49,4 @@ extern "C" {
 }
 #endif
 
-#endif
 #endif

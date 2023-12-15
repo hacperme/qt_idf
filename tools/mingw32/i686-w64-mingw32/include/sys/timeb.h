@@ -76,14 +76,25 @@ extern "C" {
 #endif
 
   _CRTIMP void __cdecl _ftime64(struct __timeb64 *_Time);
+  _CRTIMP void __cdecl _ftime32(struct __timeb32 *_Time);
 
-#ifdef _WIN64
+#ifndef _USE_32BIT_TIME_T
 #define _timeb __timeb64
-  _CRTIMP void __cdecl _ftime(struct __timeb64 *);
+#define _ftime _ftime64
 #else
 #define _timeb __timeb32
-  _CRTIMP void __cdecl _ftime(struct __timeb32 *);
+#define _ftime _ftime32
 #endif
+
+struct _timespec32 {
+  __time32_t tv_sec;
+  long tv_nsec;
+};
+
+struct _timespec64 {
+  __time64_t tv_sec;
+  long tv_nsec;
+};
 
 #ifndef _TIMESPEC_DEFINED
 #define _TIMESPEC_DEFINED
@@ -109,7 +120,7 @@ struct itimerspec {
   }
 #else
   __CRT_INLINE void __cdecl ftime(struct timeb *_Tmb) {
-    _ftime((struct __timeb32 *)_Tmb);
+    _ftime32((struct __timeb32 *)_Tmb);
   }
 #endif /* _USE_32BIT_TIME_T */
 #endif /* !__CRT__NO_INLINE */
