@@ -1,6 +1,6 @@
 SDK_DEMO_PATH = .
 
-SDK_BASE ?= ${SDK_DEMO_PATH}/../..
+SDK_BASE ?= $(abspath ../../)
 
 KCONFIG_CONFIG ?= ${SDK_DEMO_PATH}/proj.conf
 

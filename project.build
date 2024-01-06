@@ -6,13 +6,14 @@ endif
 # The command to remove a file.
 RM = cmake -E remove_directory
 
+ninja:Makefile
+	cmake -S . -B build -G Ninja
+	cd build && ninja
+
 build:Makefile
-	cmake -S . -B build -G "Unix Makefiles" $(cmake_definition)
+	cmake -S . -B build -G "Unix Makefiles"
 	cd build && make -j32
 
-ninja:Makefile
-	cmake -S . -B build -G Ninja $(cmake_definition)
-	cd build && ninja
 
 clean:
 	$(RM) build
