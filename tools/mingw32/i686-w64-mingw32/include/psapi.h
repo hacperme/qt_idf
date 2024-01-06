@@ -163,8 +163,8 @@ extern "C" {
     SIZE_T PeakUsage;
   } ENUM_PAGE_FILE_INFORMATION,*PENUM_PAGE_FILE_INFORMATION;
 
-  typedef WINBOOL (*PENUM_PAGE_FILE_CALLBACKW) (LPVOID pContext,PENUM_PAGE_FILE_INFORMATION pPageFileInfo,LPCWSTR lpFilename);
-  typedef WINBOOL (*PENUM_PAGE_FILE_CALLBACKA) (LPVOID pContext,PENUM_PAGE_FILE_INFORMATION pPageFileInfo,LPCSTR lpFilename);
+  typedef WINBOOL (CALLBACK *PENUM_PAGE_FILE_CALLBACKW) (LPVOID pContext,PENUM_PAGE_FILE_INFORMATION pPageFileInfo,LPCWSTR lpFilename);
+  typedef WINBOOL (CALLBACK *PENUM_PAGE_FILE_CALLBACKA) (LPVOID pContext,PENUM_PAGE_FILE_INFORMATION pPageFileInfo,LPCSTR lpFilename);
 
   WINBOOL WINAPI EnumPageFilesW (PENUM_PAGE_FILE_CALLBACKW pCallBackRoutine,LPVOID pContext);
   WINBOOL WINAPI EnumPageFilesA (PENUM_PAGE_FILE_CALLBACKA pCallBackRoutine,LPVOID pContext);
@@ -213,15 +213,32 @@ typedef struct _PSAPI_WORKING_SET_INFORMATION {
 
 typedef union _PSAPI_WORKING_SET_EX_BLOCK {
   ULONG_PTR Flags;
-  __C89_NAMELESS struct {
-    ULONG_PTR Valid  :1;
-    ULONG_PTR ShareCount  :3;
-    ULONG_PTR Win32Protection  :11;
-    ULONG_PTR Shared  :1;
-    ULONG_PTR Node  :6;
-    ULONG_PTR Locked  :1;
-    ULONG_PTR LargePage  :1;
-  } DUMMYSTRUCTNAME;
+  __C89_NAMELESS union {
+    __C89_NAMELESS struct {
+      ULONG_PTR Valid : 1;
+      ULONG_PTR ShareCount : 3;
+      ULONG_PTR Win32Protection : 11;
+      ULONG_PTR Shared : 1;
+      ULONG_PTR Node : 6;
+      ULONG_PTR Locked : 1;
+      ULONG_PTR LargePage : 1;
+      ULONG_PTR Reserved : 7;
+      ULONG_PTR Bad : 1;
+#ifdef _WIN64
+      ULONG_PTR ReservedUlong : 32;
+#endif
+    };
+    struct {
+      ULONG_PTR Valid : 1;
+      ULONG_PTR Reserved0 : 14;
+      ULONG_PTR Shared : 1;
+      ULONG_PTR Reserved1 : 15;
+      ULONG_PTR Bad : 1;
+#ifdef _WIN64
+      ULONG_PTR ReservedUlong : 32;
+#endif
+    } Invalid;
+  };
 } PSAPI_WORKING_SET_EX_BLOCK, *PPSAPI_WORKING_SET_EX_BLOCK;
 
 typedef struct _PSAPI_WORKING_SET_EX_INFORMATION {

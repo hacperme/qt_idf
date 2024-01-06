@@ -29,9 +29,9 @@ message("linksdk demo start")
 find_package(qt_idf_sdk REQUIRED HINTS $ENV{SDK_BASE})
 
 # sdk_set_linker_script(template.ld)
-# sdk_add_subdirectory_if_exist(cmds)
 
 sdk_set_main_file(data_model_basic_demo.c)
+sdk_add_include_directories(.)
 
 project(linksdk_demo)
 

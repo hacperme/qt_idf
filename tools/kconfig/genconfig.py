@@ -120,7 +120,7 @@ only supported for backwards compatibility).
             # compatible with the C tools. 'config.h' is used here instead for
             # backwards compatibility. It's probably a saner default for tools
             # as well.
-            kconf.write_autoconf("config.h")
+            kconf.write_autoconf("qt_idf_config.h")
     else:
         kconf.write_autoconf(args.header_path)
 

@@ -6,10 +6,11 @@
 #ifndef _INC_STDLIB
 #define _INC_STDLIB
 
-#include <crtdefs.h>
+#include <corecrt.h>
+#include <corecrt_wstdlib.h>
 #include <limits.h>
 
-#if defined (__USE_MINGW_ANSI_STDIO) && ((__USE_MINGW_ANSI_STDIO + 0) != 0) && !defined (__USE_MINGW_STRTOX)
+#if __USE_MINGW_ANSI_STDIO && !defined (__USE_MINGW_STRTOX) && !defined(_CRTBLD)
 #define __USE_MINGW_STRTOX 1
 #endif
 
@@ -20,7 +21,7 @@
 #ifndef _SECIMP
 #define _SECIMP __declspec(dllimport)
 #endif /* _SECIMP */
-#endif /* defined(_CRTBLD) || defined(__LIBMSVCRT__) */
+#endif /* defined(__LIBMSVCRT__) */
 
 #pragma pack(push,_CRT_PACKING)
 
@@ -111,7 +112,7 @@ extern "C" {
   extern int __mb_cur_max;
 #define __mb_cur_max	__mb_cur_max
 #else
-#if __MSVCRT_VERSION__ < 0x1400
+#ifndef _UCRT
   extern int * __MINGW_IMP_SYMBOL(__mb_cur_max);
 #endif
 #define __mb_cur_max	(___mb_cur_max_func())
@@ -163,7 +164,7 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
   extern char *_sys_errlist[];
   extern int _sys_nerr;
 #else
-#if __MSVCRT_VERSION__ >= 0x1400
+#ifdef _UCRT
   _CRTIMP char **__cdecl __sys_errlist(void);
   _CRTIMP int *__cdecl __sys_nerr(void);
 #define _sys_nerr (*__sys_nerr())
@@ -171,14 +172,14 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
 #else
   extern __declspec(dllimport) char *_sys_errlist[1];
   extern __declspec(dllimport) int _sys_nerr;
-#endif /* __MSVCRT_VERSION__ < 0x1400 */
+#endif /* !_UCRT */
 #endif
 
   /* We have a fallback definition of __p___argv and __p__fmode for
      msvcrt versions that lack it. */
   _CRTIMP char ***__cdecl __p___argv(void);
   _CRTIMP int *__cdecl __p__fmode(void);
-#if (defined(_X86_) && !defined(__x86_64)) || (__MSVCRT_VERSION__ >= 0x1400)
+#if (defined(_X86_) && !defined(__x86_64)) || defined(_UCRT)
   _CRTIMP int *__cdecl __p___argc(void);
   _CRTIMP wchar_t ***__cdecl __p___wargv(void);
   _CRTIMP char ***__cdecl __p__environ(void);
@@ -245,7 +246,7 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
   extern unsigned int _winminor;
 #endif
 
-#elif __MSVCRT_VERSION__ >= 0x1400
+#elif defined(_UCRT)
 
 #ifndef __argc
 #define __argc (* __p___argc())
@@ -275,7 +276,7 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
 #define _wpgmptr (* __p__wpgmptr())
 #endif
 
-#else /* __MSVCRT_VERSION__ >= 0x1400 */
+#else /* _UCRT */
 
 #ifndef __argc
   extern int * __MINGW_IMP_SYMBOL(__argc);
@@ -291,6 +292,32 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
 #endif
 
 #ifndef _POSIX_
+#if (defined(_ARM_) || defined(__arm__) || defined(_ARM64_) || defined(__aarch64__))
+  /* The plain msvcrt.dll for arm/aarch64 (and msvcr120_app.dll for arm) lacks
+   * _environ/_wenviron, but has these functions instead. */
+  _CRTIMP void __cdecl _get_environ(char ***);
+  _CRTIMP void __cdecl _get_wenviron(wchar_t ***);
+
+  static __inline char **__get_environ_ptr(void) {
+    char **__ptr;
+    _get_environ(&__ptr);
+    return __ptr;
+  }
+
+  static __inline wchar_t **__get_wenviron_ptr(void) {
+    wchar_t **__ptr;
+    _get_wenviron(&__ptr);
+    return __ptr;
+  }
+
+#ifndef _environ
+#define _environ (__get_environ_ptr())
+#endif
+
+#ifndef _wenviron
+#define _wenviron (__get_wenviron_ptr())
+#endif
+#else /* ARM/ARM64 */
 #ifndef _environ
   extern char *** __MINGW_IMP_SYMBOL(_environ);
 #define _environ (* __MINGW_IMP_SYMBOL(_environ))
@@ -300,6 +327,7 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
   extern wchar_t *** __MINGW_IMP_SYMBOL(_wenviron);
 #define _wenviron (* __MINGW_IMP_SYMBOL(_wenviron))
 #endif
+#endif /* !ARM/ARM64 */
 #endif /* !_POSIX_ */
 
 #ifndef _pgmptr
@@ -337,7 +365,7 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
 #define _winminor (* __MINGW_IMP_SYMBOL(_winminor))
 #endif
 
-#endif /* !_MSVCRT_ && __MSVCRT_VERSION__ < 0x1400 */
+#endif /* !_MSVCRT_ && !_UCRT */
 
   errno_t __cdecl _get_osplatform(unsigned int *_Value);
   errno_t __cdecl _get_osver(unsigned int *_Value);
@@ -359,6 +387,9 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
 #define _CRT_TERMINATE_DEFINED
   void __cdecl __MINGW_NOTHROW exit(int _Code) __MINGW_ATTRIB_NORETURN;
   void __cdecl __MINGW_NOTHROW _exit(int _Code) __MINGW_ATTRIB_NORETURN;
+#ifdef _UCRT
+  void __cdecl __MINGW_NOTHROW quick_exit(int _Code) __MINGW_ATTRIB_NORETURN;
+#endif
 
 #if !defined __NO_ISOCEXT /* extern stub in static libmingwex.a */
   /* C99 function name */
@@ -392,6 +423,9 @@ _CRTIMP int __cdecl ___mb_cur_max_func(void);
 #endif
 
   int __cdecl atexit(void (__cdecl *)(void));
+#ifdef _UCRT
+  int __cdecl at_quick_exit(void (__cdecl *)(void));
+#endif
 #ifndef _CRT_ATOF_DEFINED
 #define _CRT_ATOF_DEFINED
   double __cdecl atof(const char *_String);
@@ -470,8 +504,8 @@ float __cdecl __MINGW_NOTHROW strtof(const char * __restrict__ _Str,char ** __re
   /* libmingwex.a provides a c99-compliant strtod() exported as __strtod() */
   extern double __cdecl __MINGW_NOTHROW
   __strtod (const char * __restrict__ , char ** __restrict__);
-// The ucrtbase version of strtod is C99 compliant, so we don't need to redirect it to the mingw version.
-#if !defined(__USE_MINGW_STRTOX) && __MSVCRT_VERSION__ < 0x1400
+/* The UCRT version of strtod is C99 compliant, so we don't need to redirect it to the mingw version. */
+#if !defined(__USE_MINGW_STRTOX) && !defined(_UCRT)
 #define strtod __strtod
 #endif /* !defined(__USE_MINGW_STRTOX) */
 #endif /* __NO_ISOCEXT */
@@ -481,6 +515,7 @@ float __cdecl __MINGW_NOTHROW strtof(const char * __restrict__ _Str,char ** __re
   double __cdecl __mingw_strtod (const char * __restrict__, char ** __restrict__);
   long double __cdecl __mingw_strtold(const char * __restrict__, char ** __restrict__);
 #endif /* __NO_ISOCEXT */
+  _CRTIMP float __cdecl _strtof_l(const char * __restrict__ _Str,char ** __restrict__ _EndPtr,_locale_t _Locale);
   _CRTIMP double __cdecl _strtod_l(const char * __restrict__ _Str,char ** __restrict__ _EndPtr,_locale_t _Locale);
   long __cdecl strtol(const char * __restrict__ _Str,char ** __restrict__ _EndPtr,int _Radix);
   _CRTIMP long __cdecl _strtol_l(const char * __restrict__ _Str,char ** __restrict__ _EndPtr,int _Radix,_locale_t _Locale);
@@ -502,23 +537,17 @@ float __cdecl __MINGW_NOTHROW strtof(const char * __restrict__ _Str,char ** __re
   void __cdecl free(void *_Memory);
   void *__cdecl malloc(size_t _Size);
   void *__cdecl realloc(void *_Memory,size_t _NewSize);
-  _CRTIMP void *__cdecl _recalloc(void *_Memory,size_t _Count,size_t _Size);
-/* Make sure that X86intrin.h doesn't produce here collisions.  */
-#if (!defined (_XMMINTRIN_H_INCLUDED) && !defined (_MM_MALLOC_H_INCLUDED)) || defined(_aligned_malloc)
-#pragma push_macro("_aligned_free")
-#pragma push_macro("_aligned_malloc")
-#undef _aligned_free
-#undef _aligned_malloc
   _CRTIMP void __cdecl _aligned_free(void *_Memory);
   _CRTIMP void *__cdecl _aligned_malloc(size_t _Size,size_t _Alignment);
-#pragma pop_macro("_aligned_free")
-#pragma pop_macro("_aligned_malloc")
-#endif
   _CRTIMP void *__cdecl _aligned_offset_malloc(size_t _Size,size_t _Alignment,size_t _Offset);
   _CRTIMP void *__cdecl _aligned_realloc(void *_Memory,size_t _Size,size_t _Alignment);
-  _CRTIMP void *__cdecl _aligned_recalloc(void *_Memory,size_t _Count,size_t _Size,size_t _Alignment);
   _CRTIMP void *__cdecl _aligned_offset_realloc(void *_Memory,size_t _Size,size_t _Alignment,size_t _Offset);
+# if __MSVCRT_VERSION__ >= 0x900
+  _CRTIMP void *__cdecl _recalloc(void *_Memory,size_t _Count,size_t _Size);
+  _CRTIMP void *__cdecl _aligned_recalloc(void *_Memory,size_t _Count,size_t _Size,size_t _Alignment);
   _CRTIMP void *__cdecl _aligned_offset_recalloc(void *_Memory,size_t _Count,size_t _Size,size_t _Alignment,size_t _Offset);
+  _CRTIMP size_t __cdecl _aligned_msize(void *_Memory,size_t _Alignment,size_t _Offset);
+# endif
 #endif
 
 #ifndef _WSTDLIB_DEFINED
@@ -532,7 +561,7 @@ float __cdecl __MINGW_NOTHROW strtof(const char * __restrict__ _Str,char ** __re
   float __cdecl __mingw_wcstof(const wchar_t * __restrict__ nptr, wchar_t ** __restrict__ endptr);
   long double __cdecl __mingw_wcstold(const wchar_t * __restrict__, wchar_t ** __restrict__);
 
-#if defined(__USE_MINGW_STRTOX)
+#if defined(__USE_MINGW_STRTOX) && !defined(_UCRT)
   __mingw_ovr
   double __cdecl wcstod(const wchar_t * __restrict__ _Str,wchar_t ** __restrict__ _EndPtr){
     return __mingw_wcstod(_Str,_EndPtr);
@@ -545,11 +574,12 @@ float __cdecl __MINGW_NOTHROW strtof(const char * __restrict__ _Str,char ** __re
 #else
   double __cdecl wcstod(const wchar_t * __restrict__ _Str,wchar_t ** __restrict__ _EndPtr);
   float __cdecl wcstof(const wchar_t * __restrict__ nptr, wchar_t ** __restrict__ endptr);
-#endif /* defined(__USE_MINGW_STRTOX) */
+#endif /* !defined(__USE_MINGW_STRTOX) || defined(_UCRT) */
 #if !defined __NO_ISOCEXT /* in libmingwex.a */
   long double __cdecl wcstold(const wchar_t * __restrict__, wchar_t ** __restrict__);
 #endif /* __NO_ISOCEXT */
   _CRTIMP double __cdecl _wcstod_l(const wchar_t * __restrict__ _Str,wchar_t ** __restrict__ _EndPtr,_locale_t _Locale);
+  _CRTIMP float __cdecl _wcstof_l(const wchar_t * __restrict__ _Str,wchar_t ** __restrict__ _EndPtr,_locale_t _Locale);
   long __cdecl wcstol(const wchar_t * __restrict__ _Str,wchar_t ** __restrict__ _EndPtr,int _Radix);
   _CRTIMP long __cdecl _wcstol_l(const wchar_t * __restrict__ _Str,wchar_t ** __restrict__ _EndPtr,int _Radix,_locale_t _Locale);
   unsigned long __cdecl wcstoul(const wchar_t * __restrict__ _Str,wchar_t ** __restrict__ _EndPtr,int _Radix);
@@ -720,7 +750,6 @@ unsigned long __cdecl _lrotr(unsigned long,int);
 
   /* __CRT_INLINE using non-ansi functions */
 #ifndef __CRT__NO_INLINE
-  __MINGW_EXTENSION __CRT_INLINE long long  __cdecl atoll (const char * _c) { return _atoi64 (_c); }
   __MINGW_EXTENSION __CRT_INLINE char *__cdecl lltoa (long long _n, char * _c, int _i) { return _i64toa (_n, _c, _i); }
   __MINGW_EXTENSION __CRT_INLINE char *__cdecl ulltoa (unsigned long long _n, char * _c, int _i) { return _ui64toa (_n, _c, _i); }
   __MINGW_EXTENSION __CRT_INLINE long long  __cdecl wtoll (const wchar_t * _w) { return _wtoi64 (_w); }

@@ -7,8 +7,6 @@
 #ifndef _INC__MINGW_H
 #define _INC__MINGW_H
 
-#define MINGW_HAS_SECURE_API 1
-
 #include "_mingw_mac.h"
 #include "_mingw_secapi.h"
 
@@ -29,13 +27,6 @@
 #endif
 
 /* C/C++ specific language defines.  */
-#ifdef _WIN64
-#ifdef __stdcall
-#undef __stdcall
-#endif
-#define __stdcall
-#endif
-
 #ifndef __GNUC__
 # ifndef __MINGW_IMPORT
 #  define __MINGW_IMPORT  __declspec(dllimport)
@@ -88,8 +79,7 @@ limitations in handling dllimport attribute.  */
 #elif defined(_MSC_VER)
 # define __CRT_INLINE __inline
 #else
-# if ( __MINGW_GNUC_PREREQ(4, 3)  &&  __STDC_VERSION__ >= 199901L) \
-     || (defined (__clang__))
+# if ((__MINGW_GNUC_PREREQ(4, 3) || defined(__clang__)) && __STDC_VERSION__ >= 199901L)
 #  define __CRT_INLINE extern inline __attribute__((__gnu_inline__))
 # else
 #  define __CRT_INLINE extern __inline__
@@ -224,12 +214,22 @@ limitations in handling dllimport attribute.  */
 
 #ifndef __MSVCRT_VERSION__
 /*  High byte is the major version, low byte is the minor. */
-# define __MSVCRT_VERSION__ 0x700
+# if defined(__CRTDLL__)
+#  define __MSVCRT_VERSION__ 0x00
+# elif defined(_UCRT)
+#  define __MSVCRT_VERSION__ 0xE00
+# else
+#  define __MSVCRT_VERSION__ 0xE00
+# endif
 #endif
 
+#if !defined(_UCRT) && ((__MSVCRT_VERSION__ >= 0x1400) || (__MSVCRT_VERSION__ >= 0xE00 && __MSVCRT_VERSION__ < 0x1000))
+/* Allow both 0x1400 and 0xE00 to identify UCRT */
+#define _UCRT
+#endif
 
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x502
+#define _WIN32_WINNT 0x0501
 #endif
 
 #ifndef _INT128_DEFINED
@@ -366,7 +366,7 @@ typedef int __int128 __attribute__ ((__mode__ (TI)));
 
 #ifndef __WIDL__
 
-#if defined (_WIN32) && !defined (_WIN64) && !defined (__MINGW_USE_VC2005_COMPAT)
+#if defined (_WIN32) && !defined (_WIN64) && !defined (__MINGW_USE_VC2005_COMPAT) && !defined (_UCRT)
 #ifndef _USE_32BIT_TIME_T
 #define _USE_32BIT_TIME_T
 #endif
@@ -377,7 +377,7 @@ typedef int __int128 __attribute__ ((__mode__ (TI)));
 #endif
 
 #ifndef UNALIGNED
-#if defined(_M_IA64) || defined(_M_AMD64)
+#if defined(__ia64__) || defined(__x86_64__)
 #define UNALIGNED __unaligned
 #else
 #define UNALIGNED
@@ -416,16 +416,26 @@ typedef int __int128 __attribute__ ((__mode__ (TI)));
 #endif
 
 /* We are activating __USE_MINGW_ANSI_STDIO for various define indicators.
-   Note that we enable it also for _GNU_SOURCE in C++, but not for C case. */
+ * printf ll modifier (unsupported by msvcrt.dll) is required by C99 and C++11 standards. */
 #if (defined (_POSIX) || defined (_POSIX_SOURCE) || defined (_POSIX_C_SOURCE) \
      || defined (_ISOC99_SOURCE) \
+     || (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && __MSVCRT_VERSION__ < 0xE00) \
+     || (defined (__cplusplus) && __cplusplus >= 201103L && __MSVCRT_VERSION__ < 0xE00) \
      || defined (_XOPEN_SOURCE) || defined (_XOPEN_SOURCE_EXTENDED) \
-     || (defined (_GNU_SOURCE) && defined (__cplusplus)) \
+     || defined (_GNU_SOURCE) \
      || defined (_SVID_SOURCE)) \
     && !defined(__USE_MINGW_ANSI_STDIO)
-/* Enable __USE_MINGW_ANSI_STDIO if _POSIX defined
- * and If user did _not_ specify it explicitly... */
+/* Enable __USE_MINGW_ANSI_STDIO if user did _not_ specify it explicitly... */
 #  define __USE_MINGW_ANSI_STDIO			1
+#endif
+
+/* We are defining __USE_MINGW_ANSI_STDIO as 0 or 1 */
+#if !defined(__USE_MINGW_ANSI_STDIO)
+#define __USE_MINGW_ANSI_STDIO 0      /* was not defined so it should be 0 */
+#elif (__USE_MINGW_ANSI_STDIO + 0) != 0 || (1 - __USE_MINGW_ANSI_STDIO - 1) == 2
+#define __USE_MINGW_ANSI_STDIO 1      /* was defined as nonzero or empty so it should be 1 */
+#else
+#define __USE_MINGW_ANSI_STDIO 0      /* was defined as (int)zero and non-empty so it should be 0 */
 #endif
 
 /* _dowildcard is an int that controls the globbing of the command line.
@@ -518,6 +528,22 @@ typedef int __int128 __attribute__ ((__mode__ (TI)));
 /* Macros for __uuidof template-based emulation */
 #if defined(__cplusplus) && (USE___UUIDOF == 0)
 
+#if __cpp_constexpr >= 200704l && __cpp_inline_variables >= 201606L
+#define __CRT_UUID_DECL(type,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)    \
+    extern "C++" {                                               \
+    template<> struct __mingw_uuidof_s<type> {                   \
+        static constexpr IID __uuid_inst = {                     \
+            l,w1,w2, {b1,b2,b3,b4,b5,b6,b7,b8}                   \
+        };                                                       \
+    };                                                           \
+    template<> constexpr const GUID &__mingw_uuidof<type>() {    \
+        return __mingw_uuidof_s<type>::__uuid_inst;              \
+    }                                                            \
+    template<> constexpr const GUID &__mingw_uuidof<type*>() {   \
+        return  __mingw_uuidof_s<type>::__uuid_inst;             \
+    }                                                            \
+    }
+#else
 #define __CRT_UUID_DECL(type,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)           \
     extern "C++" {                                                      \
     template<> inline const GUID &__mingw_uuidof<type>() {              \
@@ -528,6 +554,7 @@ typedef int __int128 __attribute__ ((__mode__ (TI)));
         return __mingw_uuidof<type>();                                  \
     }                                                                   \
     }
+#endif
 
 #define __uuidof(type) __mingw_uuidof<__typeof(type)>()
 
@@ -543,6 +570,7 @@ extern "C" {
 
 
 #ifdef __MINGW_INTRIN_INLINE
+
 #ifdef __has_builtin
 #define __MINGW_DEBUGBREAK_IMPL !__has_builtin(__debugbreak)
 #else
@@ -552,10 +580,62 @@ extern "C" {
 void __cdecl __debugbreak(void);
 __MINGW_INTRIN_INLINE void __cdecl __debugbreak(void)
 {
+#if defined(__i386__) || defined(__x86_64__)
   __asm__ __volatile__("int {$}3":);
+#elif defined(__arm__)
+  __asm__ __volatile__("udf #0xfe");
+#elif defined(__aarch64__)
+  __asm__ __volatile__("brk #0xf000");
+#else
+  __asm__ __volatile__("unimplemented");
+#endif
 }
+#endif /* __MINGW_DEBUGBREAK_IMPL == 1 */
+
+#ifdef __has_builtin
+#define __MINGW_FASTFAIL_IMPL !__has_builtin(__fastfail)
+#else
+#define __MINGW_FASTFAIL_IMPL 1
 #endif
+#if __MINGW_FASTFAIL_IMPL == 1
+void __cdecl __MINGW_ATTRIB_NORETURN __fastfail(unsigned int code);
+__MINGW_INTRIN_INLINE void __cdecl __MINGW_ATTRIB_NORETURN __fastfail(unsigned int code)
+{
+#if defined(__i386__) || defined(__x86_64__)
+  __asm__ __volatile__("int {$}0x29"::"c"(code));
+#elif defined(__arm__)
+  register unsigned int r0 __asm__("r0") = code;
+  __asm__ __volatile__("udf #0xfb"::"r"(r0));
+#elif defined(__aarch64__)
+  register unsigned int w0 __asm__("w0") = code;
+  __asm__ __volatile__("brk #0xf003"::"r"(w0));
+#else
+  __asm__ __volatile__("unimplemented");
 #endif
+  __builtin_unreachable();
+}
+#endif /* __MINGW_FASTFAIL_IMPL == 1 */
+
+#ifdef __has_builtin
+#define __MINGW_PREFETCH_IMPL !__has_builtin(__prefetch)
+#else
+#define __MINGW_PREFETCH_IMPL 1
+#endif
+#if __MINGW_PREFETCH_IMPL == 1
+#if defined(__arm__) || defined(__aarch64__)
+void __cdecl __prefetch(const void *addr);
+__MINGW_INTRIN_INLINE void __cdecl __prefetch(const void *addr)
+{
+#if defined(__arm__)
+  __asm__ __volatile__("pld [%0]"::"r"(addr));
+#elif defined(__aarch64__)
+  __asm__ __volatile__("prfm pldl1keep, [%0]"::"r"(addr));
+#endif
+}
+#endif /* defined(__arm__) || defined(__aarch64__) */
+#endif /* __MINGW_PREFETCH_IMPL == 1 */
+
+#endif /* defined(__MINGW_INTRIN_INLINE) */
 
 /* mingw-w64 specific functions: */
 const char *__mingw_get_crt_info (void);
@@ -569,13 +649,15 @@ const char *__mingw_get_crt_info (void);
 #ifndef MINGW_SDK_INIT
 #define MINGW_SDK_INIT
 
-#ifdef MINGW_HAS_SECURE_API
-#define __STDC_SECURE_LIB__ 200411L
-#define __GOT_SECURE_LIB__ __STDC_SECURE_LIB__
+/* for backward compatibility */
+#ifndef MINGW_HAS_SECURE_API
+#define MINGW_HAS_SECURE_API 1
 #endif
 
+#define __STDC_SECURE_LIB__ 200411L
+#define __GOT_SECURE_LIB__ __STDC_SECURE_LIB__
+
 #ifndef __WIDL__
-#include "sdks/_mingw_directx.h"
 #include "sdks/_mingw_ddk.h"
 #endif
 

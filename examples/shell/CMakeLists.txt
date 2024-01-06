@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.15)
 # file(READ proj.conf PROJ_CONFIG)
 message("PROJ_CONFIG:")
 
-
-
 set(SRC_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/proj.conf)
 set(TARGET_CONFIG ${CMAKE_CURRENT_BINARY_DIR}/proj.conf)
 set(TOP_KCONFIG_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/kconfig)
@@ -32,6 +30,8 @@ find_package(qt_idf_sdk REQUIRED HINTS $ENV{SDK_BASE})
 sdk_add_subdirectory_if_exist(cmds)
 
 sdk_set_main_file(main.c)
+
+sdk_add_include_directories(.)
 
 project(shell)
 

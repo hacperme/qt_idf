@@ -1,0 +1,7 @@
+menuconfig WOLFSSL
+    bool "WOLFSSL"
+    default y
+
+if WOLFSSL
+
+endif

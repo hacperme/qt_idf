@@ -21,13 +21,17 @@
  * =================================================================================
  */
 
+#include "qt_idf_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "qt_idf_tls.h"
+#include "qt_idf_tcp.h"
 #include "dlg/dlg.h"
-
+#include "utils_timer.h"
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/ctr_drbg.h"
@@ -36,10 +40,18 @@
 #include "mbedtls/timing.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/error.h"
-
+#elif CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+#ifndef WOLFSSL_USER_SETTINGS
+    #include <wolfssl/options.h>
+#endif
+#include <wolfssl/wolfcrypt/settings.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/wolfcrypt/wc_port.h>
+#endif
 
 typedef struct
 {
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     mbedtls_net_context      socket_fd;
     mbedtls_entropy_context  entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
@@ -48,8 +60,15 @@ typedef struct
     mbedtls_x509_crt         ca_cert;
     mbedtls_x509_crt         client_cert;
     mbedtls_pk_context       private_key;
+#elif CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+    WOLFSSL_CTX* ctx;
+    WOLFSSL*     ssl;
+    WOLFSSL_METHOD* method;
+    int fd;
+#endif
 }qtf_tls_handle_t;
 
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
 #if defined(MBEDTLS_DEBUG_C)
 static void _ssl_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
@@ -60,33 +79,57 @@ static void _ssl_debug(void *ctx, int level, const char *file, int line, const c
 
 static int _mbedtls_tcp_connect(mbedtls_net_context *ctx, const char *host, uint16_t port)
 {
-    int ret = 0;
-    char port_str[6] = {0};
-
-    snprintf(port_str, sizeof(port_str), "%d", port);
-
-    ret = mbedtls_net_connect(ctx, host, port_str, MBEDTLS_NET_PROTO_TCP);
-    if(ret != 0)
+    ctx->fd = (int)qtf_tcp_connect(host, port);
+    if (ctx->fd <= 0)
     {
-        dlg_error("mbedtls_net_connect connect failed returned 0x%04x errno: %d", ret < 0 ? -ret : ret, errno);
-       
-        return ret;
+        dlg_error("qtf_tcp_connect failed");
+        return -1;
     }
-
-    ret = mbedtls_net_set_block(ctx);
-    if(ret != 0)
-    {
-        dlg_error("mbedtls_net_set_block failed returned 0x%04x errno: %d", ret < 0 ? -ret : ret, errno);
-        return ret;
-    }
-
+    
     return 0;
 }
+
+#endif
+
+#ifdef CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+
+static  int my_IOSend(WOLFSSL* ssl, char* buff, int sz, void* ctx)
+{
+    int ret = 0;
+    int fd = *(int*)ctx;
+
+    ret = qtf_tcp_send((void *)fd, (const char *)buff, sz, 1000);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_send failed");
+        return WOLFSSL_CBIO_ERR_GENERAL;
+    }
+
+    return ret;
+}
+
+static int my_IORecv(WOLFSSL* ssl, char* buff, int sz, void* ctx)
+{
+    int ret = 0;
+    int fd = *(int*)ctx;
+
+    ret = qtf_tcp_recv((void *)fd, (char *)buff, sz, 1000);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_recv failed");
+        return WOLFSSL_CBIO_ERR_GENERAL;
+    }
+
+    return ret;
+}
+
+#endif
 
 static int _tls_net_init(qtf_tls_handle_t *handle, qtf_tls_conn_param_t *param)
 {
     int ret = -1;
 
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     mbedtls_net_init(&(handle->socket_fd));
     mbedtls_ssl_init(&(handle->ssl));
     mbedtls_ssl_config_init(&(handle->ssl_conf));
@@ -197,8 +240,110 @@ static int _tls_net_init(qtf_tls_handle_t *handle, qtf_tls_conn_param_t *param)
         goto error;
     }
 
-    
+#elif CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+    wolfSSL_Init();
+    if(param->tls_version == QTF_TLS_VERSION_TLS1_2)
+    {
+        handle->method = wolfTLSv1_2_client_method();
+    }
+    else if(param->tls_version == QTF_TLS_VERSION_TLS1_3)
+    {
+        handle->method = wolfTLSv1_3_client_method();
+    }
+    else if(param->tls_version == QTF_TLS_VERSION_TLS1_2_1_3)
+    {
+        handle->method = wolfSSLv23_client_method();
+    }
+    else
+    {
+        dlg_error("not support tls version");
+        goto error;
+    }
 
+    handle->ctx = wolfSSL_CTX_new(handle->method);
+    if(!handle->ctx)
+    {
+        dlg_error("wolfSSL_CTX_new failed");
+        goto error;
+    }
+
+    wolfSSL_SetIORecv(handle->ctx, my_IORecv);
+    wolfSSL_SetIOSend(handle->ctx, my_IOSend);
+
+    if(param->verify_mode == QTF_TLS_VERIFY_MODE_NONE || param->verify_mode == QTF_TLS_VERIFY_MODE_OPTIONAL)
+    {
+        wolfSSL_CTX_set_verify(handle->ctx, SSL_VERIFY_NONE, NULL);
+    }
+    else if (param->verify_mode == QTF_TLS_VERIFY_MODE_REQUIRED)
+    {
+        wolfSSL_CTX_set_verify(handle->ctx, SSL_VERIFY_PEER, NULL);
+    }
+    else
+    {
+        dlg_error("invalid verify mode");
+        goto error;
+    }
+
+   
+
+    if(param->auth_mode == QTF_TLS_AUTH_MODE_CERT)
+    {
+        if(param->ca_cert && param->ca_cert_len)
+        {
+            ret = wolfSSL_CTX_load_verify_buffer(handle->ctx, (const unsigned char *)param->ca_cert, param->ca_cert_len, SSL_FILETYPE_PEM);
+            if (ret != SSL_SUCCESS)
+            {
+                dlg_error("wolfSSL_CTX_load_verify_buffer failed");
+                goto error;
+            }
+        }
+        else
+        {
+            if(param->verify_mode != QTF_TLS_VERIFY_MODE_NONE)
+            {
+                dlg_error("invalid ca cert");
+                goto error;
+            }
+            dlg_info("verify mode is none");
+        }
+        
+        if (param->client_cert && param->client_cert_len && param->client_key && param->client_key_len)
+        {
+            ret = wolfSSL_CTX_use_certificate_buffer(handle->ctx, (const unsigned char *)param->client_cert, param->client_cert_len, SSL_FILETYPE_PEM);
+            if (ret != SSL_SUCCESS)
+            {
+                dlg_error("wolfSSL_CTX_use_certificate_buffer failed");
+                goto error;
+            }
+
+            ret = wolfSSL_CTX_use_PrivateKey_buffer(handle->ctx, (const unsigned char *)param->client_key, param->client_key_len, SSL_FILETYPE_PEM);
+            if (ret != SSL_SUCCESS)
+            {
+                dlg_error("wolfSSL_CTX_use_PrivateKey_buffer failed");
+                goto error;
+            }
+        }
+    }
+    else if(param->auth_mode == QTF_TLS_AUTH_MODE_PSK)
+    {
+        
+    }
+    else
+    {
+        dlg_error("invalid auth mode");
+        goto error;
+    }
+
+    handle->ssl = wolfSSL_new(handle->ctx);
+    if(!handle->ssl)
+    {
+        dlg_error("wolfSSL_new failed");
+        goto error;
+    }
+
+    ret = 0;
+
+#endif
 
     return ret;
 
@@ -210,7 +355,9 @@ error:
 
 static int __tls_net_deinit(qtf_tls_handle_t *handle)
 {
-    mbedtls_net_free(&(handle->socket_fd));
+
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
+    qtf_tcp_close((void *)handle->socket_fd.fd);
     mbedtls_ssl_free(&(handle->ssl));
     mbedtls_ssl_config_free(&(handle->ssl_conf));
     mbedtls_ctr_drbg_free(&(handle->ctr_drbg));
@@ -218,9 +365,69 @@ static int __tls_net_deinit(qtf_tls_handle_t *handle)
     mbedtls_x509_crt_free(&(handle->ca_cert));
     mbedtls_x509_crt_free(&(handle->client_cert));
     mbedtls_pk_free(&(handle->private_key));
-
+#elif CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+    wolfSSL_shutdown(handle->ssl);
+    wolfSSL_free(handle->ssl);
+    wolfSSL_CTX_free(handle->ctx);
+    wolfSSL_Cleanup();
+    qtf_tcp_close((void *)handle->fd);
+#endif
     return 0;
 }
+
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
+static int __tls_net_send(void *ctx, const unsigned char *buf, size_t len)
+{
+
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+    int fd = ((mbedtls_net_context *) ctx)->fd;
+
+    ret = qtf_tcp_send((void *)fd, (const char *)buf, len, 0);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_send failed");
+        return MBEDTLS_ERR_NET_SEND_FAILED;
+    }
+
+    return ret;
+}
+
+static int __tls_net_recv(void *ctx, unsigned char *buf, size_t len)
+{
+
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+    int fd = ((mbedtls_net_context *) ctx)->fd;
+
+    ret = qtf_tcp_recv((void *)fd, (char *)buf, len, 0);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_recv failed");
+        return MBEDTLS_ERR_NET_RECV_FAILED;
+    }
+
+    return ret;
+}
+
+static int __tls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len, uint32_t timeout_ms)
+{
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+
+    int fd = ((mbedtls_net_context *) ctx)->fd;
+
+
+    ret = qtf_tcp_recv((void *)fd, (char *)buf, len, timeout_ms);
+    if (ret < 0)
+    {
+        dlg_error("qtf_tcp_recv failed");
+        return MBEDTLS_ERR_NET_RECV_FAILED;
+    }
+
+    return ret;
+}
+
+#endif
+
+
 
 void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *param)
 {
@@ -248,7 +455,7 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
     }
 
     dlg_info("Connecting to %s:%d...", host, port);
-
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
     ret = _mbedtls_tcp_connect(&(handle->socket_fd), host, port);
     if (ret != 0)
     {
@@ -290,7 +497,7 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
         goto error;
     }
 
-    mbedtls_ssl_set_bio(&(handle->ssl), &(handle->socket_fd), mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout);
+    mbedtls_ssl_set_bio(&(handle->ssl), &(handle->socket_fd), __tls_net_send, __tls_net_recv, __tls_net_recv_timeout);
 
     ret = mbedtls_ssl_set_hostname(&(handle->ssl), host);
     if (ret != 0)
@@ -315,6 +522,25 @@ void *qtf_tls_connect(const char *host, uint16_t port, qtf_tls_conn_param_t *par
         dlg_error("mbedtls_ssl_get_verify_result  0x%04x", ret < 0 ? -ret : ret);
         goto error;
     }
+#elif CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+    handle->fd = (int)qtf_tcp_connect(host, port);
+    if (handle->fd <= 0)
+    {
+        dlg_error("qtf_tcp_connect failed");
+        goto error;
+    }
+    wolfSSL_set_fd(handle->ssl, handle->fd);
+
+    ret = wolfSSL_connect(handle->ssl);
+    if (ret != SSL_SUCCESS)
+    {
+        ret = wolfSSL_get_error(handle->ssl, ret);
+        dlg_error("wolfSSL_connect failed ret:%d, 0x%04x",ret, ret < 0 ? -ret : ret);
+        goto error;
+    }
+
+
+#endif
 
     return handle;
 
@@ -333,6 +559,8 @@ int qtf_tls_send(void *handle, const void *buf, uint32_t len, uint32_t timeout_m
 {
     qtf_tls_handle_t *tls_handle = (qtf_tls_handle_t *)handle;
     int ret = 0;
+    int send_len = 0;
+    timer_t timer;
 
     if(!handle || !buf || !len)
     {
@@ -340,21 +568,51 @@ int qtf_tls_send(void *handle, const void *buf, uint32_t len, uint32_t timeout_m
         return -1;
     }
 
-    while ((ret = mbedtls_ssl_write(&(tls_handle->ssl), (const unsigned char *)buf, len)) <= 0)
+    qtf_timer_init(&timer);
+    qtf_timer_countdown_ms(&timer, timeout_ms);
+
+    do
     {
-        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
+        ret = mbedtls_ssl_write(&(tls_handle->ssl), (const unsigned char *)buf + send_len, len - send_len);
+
+        if (ret > 0)
+        {
+            send_len += ret;
+        }
+        else if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
         {
             dlg_error("mbedtls_ssl_write failed 0x%04x", ret < 0 ? -ret : ret);
-            return -1;
+            break;
         }
-    }
+#elif CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+        ret = wolfSSL_write(tls_handle->ssl, (const unsigned char *)buf + send_len, len - send_len);
 
-    return ret;
+        if (ret >= 0)
+        {
+            send_len += ret;
+        }
+        else
+        {
+            dlg_error("wolfSSL_write failed 0x%04x", ret < 0 ? -ret : ret);
+            break;
+        }
+#endif
+    } while (send_len < len && !qtf_timer_expired(&timer));
+
+    if(send_len == 0)
+    {
+        return -1;
+    }
+    
+    return send_len;
 }
 int qtf_tls_recv(void *handle, void *buf, uint32_t len, uint32_t timeout_ms)
 {
     qtf_tls_handle_t *tls_handle = (qtf_tls_handle_t *)handle;
     int ret = 0;
+    timer_t timer;
+    int recv_len = 0;
 
     if(!handle || !buf || !len)
     {
@@ -362,29 +620,66 @@ int qtf_tls_recv(void *handle, void *buf, uint32_t len, uint32_t timeout_ms)
         return -1;
     }
 
-    while ((ret = mbedtls_ssl_read(&(tls_handle->ssl), (unsigned char *)buf, len)) <= 0)
+    qtf_timer_init(&timer);
+    qtf_timer_countdown_ms(&timer, timeout_ms);
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
+    mbedtls_ssl_conf_read_timeout(&(tls_handle->ssl_conf), timeout_ms);
+#endif
+    do
     {
-        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
-        {
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
+       ret = mbedtls_ssl_read(&(tls_handle->ssl), (unsigned char *)buf + recv_len, len - recv_len);
+
+         if (ret > 0)
+         {
+              recv_len += ret;
+         }
+         else if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
+         {
             dlg_error("mbedtls_ssl_read failed 0x%04x", ret < 0 ? -ret : ret);
-            return -1;
+             break;
+         }
+#elif CONFIG_NETWORK_WOLFSSL_TLS_ENABLE
+        ret = wolfSSL_read(tls_handle->ssl, (unsigned char *)buf + recv_len, len - recv_len);
+
+        if (ret >= 0)
+        {
+            recv_len += ret;
         }
+        else
+        {
+            dlg_error("wolfSSL_read failed 0x%04x", ret < 0 ? -ret : ret);
+            break;
+        }
+#endif
+    } while (recv_len < len && !qtf_timer_expired(&timer));
+    
+    if(recv_len == 0)
+    {
+        return -1;
     }
 
-    return ret;
+    return recv_len;
 }
+
 int qtf_tls_close(void *handle)
 {
+    int ret = 0;
     qtf_tls_handle_t *tls_handle = (qtf_tls_handle_t *)handle;
 
-    if(!handle)
+    if (!handle)
     {
         dlg_error("invalid param");
         return -1;
     }
-
+#ifdef CONFIG_NETWORK_MBEDTLS_TLS_ENABLE
+    do
+    {
+        ret = mbedtls_ssl_close_notify(&(tls_handle->ssl));
+    } while (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE);
+#endif
     __tls_net_deinit(tls_handle);
     free(tls_handle);
 
-    return 0;
+    return ret;
 }
