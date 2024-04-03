@@ -42,7 +42,8 @@
 #include <uECC.h>
 #include "qt_idf_tls.h"
 #include "duktape.h"
-
+#include "mbedtls/aes.h"
+#include "mbedtls/base64.h"
 
 
 extern void shell_lvgl_cmd(int argc, char *argv);
@@ -379,6 +380,248 @@ void shell_duktape_test_cmd(int argc, char *argv)
 	duk_destroy_heap(ctx);
 }
 
+
+#define os_printf printf
+
+#define AES_CBC_BASE64  1
+#define AES_CBC_HEX     2
+
+ void print_hex(const char* title, const unsigned char* data, size_t len) 
+{
+    os_printf("%s:\n", title);
+    for (size_t i = 0; i < len; ++i)
+        os_printf("%02X", data[i]);
+
+    os_printf("\n");
+}
+
+int ql_aes_cbc_decrypt(unsigned char* key, int key_bits, unsigned char* src, int src_len, unsigned char* iv, unsigned char* dst, int mode)
+{
+	size_t out_len = src_len;
+	unsigned char *ciphertext = NULL;
+	mbedtls_aes_context aes_ctx;
+	unsigned char *plaintext = NULL;
+	int ret = -1;
+
+	mbedtls_aes_init(&aes_ctx);
+	os_printf("%s:%d,%s, %d\r\n", __func__, __LINE__, src, src_len);
+	if (mode == AES_CBC_BASE64)
+	{
+		ret = mbedtls_base64_decode(NULL, 0, &out_len, (const unsigned char *)src, src_len);
+		if (MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL == ret || ret == 0)
+		{
+			os_printf("%s:%d,out_len %d\r\n", __func__, __LINE__, out_len);
+			ciphertext = (unsigned char *)malloc(out_len);
+			if (ciphertext == NULL)
+			{
+				os_printf("%s:%d,no mem\r\n", __func__, __LINE__);
+				goto exit;
+			}
+			memset(ciphertext, 0, out_len);
+			ret = mbedtls_base64_decode(ciphertext, out_len, &out_len, (const unsigned char *)src, src_len);
+			if (ret != 0)
+			{
+				os_printf("%s:%d,base64 decode fail, ret %d\r\n", __func__, __LINE__, ret);
+				ret = -1;
+				goto exit;
+			}
+
+		}
+		else
+		{
+			os_printf("%s:%d,base64 decode fail, ret %d\r\n", __func__, __LINE__, ret);
+			goto exit;
+		}
+	}
+
+	mbedtls_aes_setkey_dec(&aes_ctx, key, key_bits);
+
+	os_printf("%s:%d,out_len %d\r\n", __func__, __LINE__, out_len);
+
+	plaintext = malloc(out_len);
+	if (plaintext == NULL)
+	{
+		os_printf("%s:%d,no mem\r\n", __func__, __LINE__);
+		ret = -1;
+		goto exit;
+	}
+
+	memset(plaintext, 0, out_len);
+
+	ret = mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_DECRYPT, out_len, iv, (mode == AES_CBC_BASE64) ? ciphertext : src, plaintext);
+	if (ret != 0)
+	{
+		os_printf("%s:%d,mbedtls_aes_crypt_cbc fail ret:%d\r\n", __func__, __LINE__, ret);
+		ret = -1;
+		goto exit;
+	}
+
+	// ·´ÏòÌî³ä
+	if (out_len <= 0)
+	{
+		os_printf("%s:%d,out_len err:%d\r\n", __func__, __LINE__, out_len);
+		ret = -1;
+		goto exit;
+	}
+
+	unsigned char padding = plaintext[out_len - 1];
+
+	if (padding > out_len || padding <= 0)
+	{
+		os_printf("%s:%d,padding err:%d\r\n", __func__, __LINE__, padding);
+		ret = -1;
+		goto exit;
+	}
+	for (size_t i = out_len - 1; i > out_len - padding; i--)
+	{
+		if (plaintext[i] != padding)
+		{
+			os_printf("%s:%d,padding err:%d\r\n", __func__, __LINE__, padding);
+			ret = -1;
+			goto exit;
+		}
+	}
+
+	size_t plaintext_len_no_padding = out_len - padding;
+	os_printf("plaintext_len_no_padding(%d)=out_len(%d)-padding(%d),\r\n", plaintext_len_no_padding, padding, out_len);
+	plaintext[plaintext_len_no_padding] = '\0';
+	os_printf("plaintext_str:%s\n", plaintext);
+	memcpy(src, plaintext, plaintext_len_no_padding);
+	ret = plaintext_len_no_padding;
+
+exit:
+	if (ciphertext)
+	{
+		free(ciphertext);
+	}
+	mbedtls_aes_free(&aes_ctx);
+	return ret;
+}
+
+
+int ql_aes_cbc_encrypt(unsigned char* key, int key_bits, unsigned char* src, int src_len, unsigned char* iv, unsigned char* dst, int mode)
+{
+	int ret = 0;
+	unsigned char *ciphertext = NULL;
+	mbedtls_aes_context aes_ctx;
+	unsigned char _iv[16] = {0};
+	char *base64_ciphertext = NULL;
+	unsigned char *padded_plaintext = NULL;
+
+	mbedtls_aes_init(&aes_ctx);
+	memcpy(_iv, iv, 16);
+	ciphertext = malloc(src_len + 16);
+	if (ciphertext == NULL)
+	{
+		os_printf("%s:%d,no mem\r\n", __func__, __LINE__);
+		ret = -1;
+		goto exit;
+	}
+	memset(ciphertext, 0, src_len + 16);
+	ret = mbedtls_aes_setkey_enc(&aes_ctx, key, key_bits);
+	if (ret != 0)
+	{
+		os_printf("%s:%d,ret:%d\r\n", __func__, __LINE__, ret);
+		ret = -1;
+		goto exit;
+	}
+
+	size_t plaintext_len = src_len;
+	unsigned char padding_value = (16 - (plaintext_len % 16));
+	size_t padded_len = plaintext_len + padding_value;
+
+	padded_plaintext = (unsigned char *)malloc(padded_len);
+	if (padded_plaintext == NULL)
+	{
+		os_printf("%s:%d,no mem\r\n", __func__, __LINE__);
+		ret = -1;
+		goto exit;
+	}
+	memset(padded_plaintext, 0, padded_len);
+	memcpy(padded_plaintext, src, plaintext_len);
+
+	// PKCS5PaddingÌî³ä
+
+	for (size_t i = plaintext_len; i < padded_len; ++i)
+	{
+		padded_plaintext[i] = padding_value;
+	}
+
+	ret = mbedtls_aes_crypt_cbc(&aes_ctx, MBEDTLS_AES_ENCRYPT, padded_len, _iv, padded_plaintext, ciphertext);
+	if (ret != 0)
+	{
+		os_printf("%s:%d,ret:%d\r\n", __func__, __LINE__, ret);
+		ret = -1;
+		goto exit;
+	}
+
+
+	if (mode == AES_CBC_BASE64)
+	{
+		
+		size_t out_len = 0;
+		base64_ciphertext = malloc(padded_len * 2);
+		if (base64_ciphertext == NULL)
+		{
+			os_printf("%s:%d,no mem\r\n", __func__, __LINE__);
+			ret = -1;
+			goto exit;
+		}
+		memset(base64_ciphertext, 0, padded_len * 2);
+
+		ret = mbedtls_base64_encode((unsigned char *)base64_ciphertext, padded_len * 2, &out_len, ciphertext, padded_len);
+		if (ret != 0)
+		{
+			os_printf("%s:%d,ret:%d\r\n", __func__, __LINE__, ret);
+			ret = -1;
+			goto exit;
+		}
+
+		os_printf("Base64 Ciphertext: %s\n", base64_ciphertext);
+		strncpy((char *)dst, base64_ciphertext, out_len);
+		ret = out_len;
+	}
+	else if (mode == AES_CBC_HEX)
+	{
+		print_hex("Ciphertext_hex", ciphertext, padded_len);
+		strncpy((char *)dst, (const char *)ciphertext, padded_len);
+		ret = padded_len;
+	}
+
+exit:
+
+	if (base64_ciphertext)
+	{
+		free(base64_ciphertext);
+	}
+	if (padded_plaintext)
+	{
+		free(padded_plaintext);
+	}
+
+	if (ciphertext)
+	{
+		free(ciphertext);
+	}
+
+	mbedtls_aes_free(&aes_ctx);
+	return ret;
+}
+
+void shell_aes_test_cmd(int argc, char *argv)
+{
+	unsigned char key[] = "cgw-aes-sig-skey";
+	unsigned char dst[256] = {0};
+	unsigned char plaintext[256] = {0};
+	int key_bits = 128;
+	unsigned char src[] = "EC1D9EE3206D_LIgsoM9LuDHqYUr4_1712038251000";
+	int src_len = strlen((char *)src);
+	char iv[] = "0000000000000000";
+
+	ql_aes_cbc_encrypt(key, key_bits, src, src_len, (unsigned char *)iv, dst, AES_CBC_BASE64);
+	ql_aes_cbc_decrypt(key, key_bits, dst, strlen((const char *)dst), (unsigned char *)iv, plaintext, AES_CBC_BASE64);
+}
+
 #ifdef NR_SHELL_USING_EXPORT_CMD
 NR_SHELL_CMD_EXPORT(test, shell_test_cmd);
 #else
@@ -394,6 +637,7 @@ const static_cmd_st static_cmd[] =
 		{"ecctest", shell_ecctest_cmd,"ecc test command"},
 		{"tlstest", shell_tlstest_cmd,"tls test command"},
 		{"duktest", shell_duktape_test_cmd,"duktape test command"},
+		{"aestest", shell_aes_test_cmd,"aes test command"},
 		{"\0", NULL, NULL}};
 #endif
 
