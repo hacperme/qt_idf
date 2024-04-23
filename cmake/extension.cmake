@@ -146,7 +146,7 @@ macro(project name)
 
   _project(${name} ASM C CXX)
   
-  if(MINGW OR CYGWIN OR WIN32)
+  if(MINGW OR CYGWIN OR WIN32 OR CMAKE_HOST_WIN32)
     set(EXEC_FILE_SUFFIX ".exe")
   else()
     set(EXEC_FILE_SUFFIX ".elf")
