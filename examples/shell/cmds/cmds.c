@@ -44,7 +44,7 @@
 #include "duktape.h"
 #include "mbedtls/aes.h"
 #include "mbedtls/base64.h"
-
+#include "heap4.h"
 
 extern void shell_lvgl_cmd(int argc, char *argv);
 extern void shell_cbor_cmd(int argc, char *argv);
@@ -300,6 +300,8 @@ void shell_tlstest_cmd(int argc, char *argv)
 	tls_param.tls_version = QTF_TLS_VERSION_TLS1_2;
 	tls_param.max_frag_len = QTF_TLS_MAX_FRAG_LEN_NO_USE;
 
+	shell_printf("xPortGetFreeHeapSize %d\r\n", xPortGetFreeHeapSize());
+
 	tls_handle = qtf_tls_connect("httpbin.org", 443, &tls_param);
 	if(tls_handle)
 	{
@@ -310,7 +312,7 @@ void shell_tlstest_cmd(int argc, char *argv)
 		shell_printf("tls connect failed\r\n");
 		return;
 	}
-
+	shell_printf("xPortGetFreeHeapSize %d\r\n", xPortGetFreeHeapSize());
 	ret = qtf_tls_send(tls_handle, request, strlen(request), 1000);
 	if(ret > 0)
 	{
@@ -337,6 +339,8 @@ void shell_tlstest_cmd(int argc, char *argv)
 	}
 
 	qtf_tls_close(tls_handle);
+
+	shell_printf("xPortGetFreeHeapSize %d\r\n", xPortGetFreeHeapSize());
 
 }
 
@@ -456,7 +460,7 @@ int ql_aes_cbc_decrypt(unsigned char* key, int key_bits, unsigned char* src, int
 		goto exit;
 	}
 
-	// ·´ÏòÌî³ä
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	if (out_len <= 0)
 	{
 		os_printf("%s:%d,out_len err:%d\r\n", __func__, __LINE__, out_len);
@@ -540,7 +544,7 @@ int ql_aes_cbc_encrypt(unsigned char* key, int key_bits, unsigned char* src, int
 	memset(padded_plaintext, 0, padded_len);
 	memcpy(padded_plaintext, src, plaintext_len);
 
-	// PKCS5PaddingÌî³ä
+	// PKCS5Paddingï¿½ï¿½ï¿½
 
 	for (size_t i = plaintext_len; i < padded_len; ++i)
 	{
