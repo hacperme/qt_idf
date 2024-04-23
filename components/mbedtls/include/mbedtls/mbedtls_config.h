@@ -1940,7 +1940,7 @@
  *
  * Uncomment this to enable internal use of PSA Crypto and new associated APIs.
  */
-#define MBEDTLS_USE_PSA_CRYPTO
+// #define MBEDTLS_USE_PSA_CRYPTO
 
 /**
  * \def MBEDTLS_PSA_CRYPTO_CONFIG
@@ -3740,7 +3740,10 @@
  *
  * Uncomment to set the maximum plaintext size of the incoming I/O buffer.
  */
-//#define MBEDTLS_SSL_IN_CONTENT_LEN              16384
+
+#ifdef CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN
+#define MBEDTLS_SSL_IN_CONTENT_LEN              CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN
+#endif
 
 /** \def MBEDTLS_SSL_CID_IN_LEN_MAX
  *
@@ -3790,7 +3793,9 @@
  *
  * Uncomment to set the maximum plaintext size of the outgoing I/O buffer.
  */
-//#define MBEDTLS_SSL_OUT_CONTENT_LEN             16384
+#ifdef CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN
+#define MBEDTLS_SSL_OUT_CONTENT_LEN             CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN
+#endif
 
 /** \def MBEDTLS_SSL_DTLS_MAX_BUFFERING
  *

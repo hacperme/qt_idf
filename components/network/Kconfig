@@ -12,6 +12,35 @@ if NETWORK
         bool "ENANBLE TCP"
         default y
 
+    config MBEDTLS_DYNAMIC_BUFFER
+        bool "MBEDTLS DYNAMIC BUFFER"
+        depends on MBEDTLS
+        default n
+
+    config MBEDTLS_DYNAMIC_FREE_CONFIG_DATA
+        bool "MBEDTLS DYNAMIC FREE CONFIG DATA"
+        depends on MBEDTLS
+        default n
+
+    config MBEDTLS_DYNAMIC_FREE_CA_CERT
+        bool "MBEDTLS DYNAMIC FREE CA CERT"
+        depends on MBEDTLS
+        default n
+
+    config MBEDTLS_SSL_IN_CONTENT_LEN
+        int "MBEDTLS SSL IN CONTENT LEN"
+        depends on MBEDTLS
+        default 16384
+        help
+            MBEDTLS SSL IN CONTENT LEN
+
+    config MBEDTLS_SSL_OUT_CONTENT_LEN
+        int "MBEDTLS SSL OUT CONTENT LEN"
+        depends on MBEDTLS
+        default 4096
+        help
+            MBEDTLS SSL OUT CONTENT LEN
+
 choice
     prompt "TLS bankend choice" 
     default NETWORK_MBEDTLS_TLS_ENABLE
@@ -24,6 +53,8 @@ choice
         bool "ENANBLE WOLFSSL TLS"
         depends on WOLFSSL
         depends on NETWORK_TCP_ENABLE
+
+    
         
 endchoice
 

@@ -33,6 +33,9 @@ sdk_set_main_file(main.c)
 
 sdk_add_include_directories(.)
 
+sdk_add_compile_options(
+    -include qt_idf_config.h
+)
 project(shell)
 
 message("example_shell end")
