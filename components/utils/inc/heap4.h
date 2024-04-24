@@ -1,6 +1,6 @@
 #ifndef __HEAP_4_H__
 #define __HEAP_4_H__
-#include "config.h"
+// #include "config.h"
 
 #include <stdint.h>
 #include <stdio.h>

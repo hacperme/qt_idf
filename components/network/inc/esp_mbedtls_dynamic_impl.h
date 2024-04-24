@@ -14,12 +14,7 @@
 
 #include <sys/cdefs.h> // 
 
-// #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE*)0)->MEMBER)
-#define container_of(ptr, type, member) ({          \
-        const typeof( ((type *)0)->member ) *__mptr = (const typeof( ((type *)0)->member ) *)(ptr); \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
 
-#define __containerof(ptr, type, member) container_of(ptr, type, member)
 /* TODO: Remove this once the appropriate solution is found
  *
  * ssl_misc.h header uses private elements from
@@ -35,6 +30,13 @@
 #include "mbedtls/platform.h"
 // #include "esp_log.h"
 #include "dlg/dlg.h"
+
+// #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE*)0)->MEMBER)
+#define container_of(ptr, type, member) ({          \
+        const typeof( ((type *)0)->member ) *__mptr = (const typeof( ((type *)0)->member ) *)(ptr); \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
+
+#define __containerof(ptr, type, member) container_of(ptr, type, member)
 
 #define TRACE_CHECK(_fn, _state) \
 ({ \

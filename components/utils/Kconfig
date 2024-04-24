@@ -3,5 +3,7 @@ menuconfig UTILS
     default y
 
 if UTILS
-
+    config USE_HEAP_4
+        bool "Use freertos heap_4.c  dynamic memory"
+        default y
 endif
