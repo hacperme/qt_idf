@@ -101,6 +101,7 @@ typedef struct A_BLOCK_LINK
     struct A_BLOCK_LINK * pxNextFreeBlock; /*<< The next free block in the list. */
     size_t xBlockSize;                     /*<< The size of the free block. */
     size_t xWantedSize;
+    void *caller;
 } BlockLink_t;
 
 /*-----------------------------------------------------------*/
@@ -137,7 +138,7 @@ PRIVILEGED_DATA static size_t xNumberOfSuccessfulFrees = 0;
 
 /*-----------------------------------------------------------*/
 
-void * pvPortMalloc( size_t xWantedSize )
+void * pvPortMalloc( size_t xWantedSize , void * caller)
 {
     BlockLink_t * pxBlock, * pxPreviousBlock, * pxNewBlockLink;
     void * pvReturn = NULL;
@@ -162,7 +163,8 @@ void * pvPortMalloc( size_t xWantedSize )
             /* The wanted size must be increased so it can contain a BlockLink_t
              * structure in addition to the requested amount of bytes. Some
              * additional increment may also be needed for alignment. */
-            xAdditionalRequiredSize = xHeapStructSize + portBYTE_ALIGNMENT - ( xWantedSize & portBYTE_ALIGNMENT_MASK );
+            xWantedSize+=1;
+            xAdditionalRequiredSize = xHeapStructSize  + portBYTE_ALIGNMENT - ( xWantedSize & portBYTE_ALIGNMENT_MASK );
 
             if( heapADD_WILL_OVERFLOW( xWantedSize, xAdditionalRequiredSize ) == 0 )
             {
@@ -224,6 +226,7 @@ void * pvPortMalloc( size_t xWantedSize )
                          * single block. */
                         pxNewBlockLink->xBlockSize = pxBlock->xBlockSize - xWantedSize;
                         pxNewBlockLink->xWantedSize = 0;
+                        pxNewBlockLink->caller = NULL;
                         pxBlock->xBlockSize = xWantedSize;
 
                         /* Insert the new block into the list of free blocks. */
@@ -234,9 +237,10 @@ void * pvPortMalloc( size_t xWantedSize )
                         mtCOVERAGE_TEST_MARKER();
                     }
 
-                    pxBlock->xWantedSize = _xWantedSize;
+                    
 
                     xFreeBytesRemaining -= pxBlock->xBlockSize;
+                    
 
                     if( xFreeBytesRemaining < xMinimumEverFreeBytesRemaining )
                     {
@@ -246,6 +250,18 @@ void * pvPortMalloc( size_t xWantedSize )
                     {
                         mtCOVERAGE_TEST_MARKER();
                     }
+
+              
+                    pxBlock->xWantedSize = _xWantedSize;
+                    pxBlock->caller = caller;
+                    int _len = pxBlock->xBlockSize-_xWantedSize-xHeapStructSize;
+					uint8_t *_p = (uint8_t *)pxBlock+_xWantedSize+xHeapStructSize;
+					while (_len > 0)
+					{
+						*_p = 0xfd;
+						_p++;
+						_len--;
+					}
 
                     /* The block is being returned - it is allocated and owned
                      * by the application and has no "next" block. */
@@ -321,6 +337,19 @@ void vPortFree( void * pv )
                 #endif
 
                 vTaskSuspendAll();
+                int _len = pxLink->xBlockSize - pxLink->xWantedSize - xHeapStructSize;
+				uint8_t *_p = (uint8_t *)pxLink + pxLink->xWantedSize+xHeapStructSize;
+				while (_len > 0)
+				{
+					if(*_p != 0xfd)
+					{
+						printf("mem crash,block:0x%p,caller: 0x%p, 0x%02x\r\n", pxLink,pxLink->caller, *_p);
+					}
+					configASSERT( (*_p == 0xfd ) );
+					_p++;
+					_len--;
+				}
+
                 {
                     /* Add this block to the list of free blocks. */
                     xFreeBytesRemaining += pxLink->xBlockSize;
@@ -369,7 +398,8 @@ void * pvPortCalloc( size_t xNum,
 
     if( heapMULTIPLY_WILL_OVERFLOW( xNum, xSize ) == 0 )
     {
-        pv = pvPortMalloc( xNum * xSize );
+        void *caller = __builtin_return_address (0);
+        pv = pvPortMalloc( xNum * xSize, caller);
 
         if( pv != NULL )
         {
@@ -382,7 +412,7 @@ void * pvPortCalloc( size_t xNum,
 /*-----------------------------------------------------------*/
 
 void *pvPortRealloc(void *p,
-                    size_t xSize)
+                    size_t xSize, void * caller)
 {
     void *pv = NULL;
     uint8_t *puc = (uint8_t *)p;
@@ -399,7 +429,7 @@ void *pvPortRealloc(void *p,
     configASSERT(heapBLOCK_IS_ALLOCATED(pxLink) != 0);
     configASSERT(pxLink->pxNextFreeBlock == NULL);
 
-    pv = pvPortMalloc(xSize);
+    pv = pvPortMalloc(xSize, caller);
     if (pv == NULL)
     {
         return NULL;
@@ -433,6 +463,7 @@ static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
      * blocks.  The void cast is used to prevent compiler warnings. */
     xStart.pxNextFreeBlock = ( void * ) pucAlignedHeap;
     xStart.xBlockSize = ( size_t ) 0;
+    xStart.caller = NULL;
     xStart.xWantedSize = 0;
 
     /* pxEnd is used to mark the end of the list of free blocks and is inserted
@@ -442,6 +473,7 @@ static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
     uxAddress &= ~( ( size_t ) portBYTE_ALIGNMENT_MASK );
     pxEnd = ( void * ) uxAddress;
     pxEnd->xBlockSize = 0;
+    pxEnd->caller = NULL;
     pxEnd->pxNextFreeBlock = NULL;
 
     /* To start with there is a single free block that is sized to take up the
@@ -449,6 +481,7 @@ static void prvHeapInit( void ) /* PRIVILEGED_FUNCTION */
     pxFirstFreeBlock = ( void * ) pucAlignedHeap;
     pxFirstFreeBlock->xBlockSize = uxAddress - ( size_t ) pxFirstFreeBlock;
     pxFirstFreeBlock->xWantedSize = 0;
+    pxFirstFreeBlock->caller = NULL;
     pxFirstFreeBlock->pxNextFreeBlock = pxEnd;
 
     /* Only one block exists - and it covers the entire usable heap space. */
@@ -603,16 +636,55 @@ size_t vPortGetAllocSize(void *p)
     return pxLink->xWantedSize;
 }
 
+
+void show_heap_info(void)
+{
+    BlockLink_t * pxLink = NULL;
+    uint8_t * pucAlignedHeap;
+    size_t uxAddress;
+    size_t xTotalHeapSize = configTOTAL_HEAP_SIZE;
+
+    vTaskSuspendAll();
+    uxAddress = ( size_t ) ucHeap;
+
+    if( ( uxAddress & portBYTE_ALIGNMENT_MASK ) != 0 )
+    {
+        uxAddress += ( portBYTE_ALIGNMENT - 1 );
+        uxAddress &= ~( ( size_t ) portBYTE_ALIGNMENT_MASK );
+        xTotalHeapSize -= uxAddress - ( size_t ) ucHeap;
+    }
+
+    pucAlignedHeap = ( uint8_t * ) uxAddress;
+
+    pxLink = (BlockLink_t *)pucAlignedHeap;
+
+    printf("\r\naddress: 0x%p\r\nsize: %d\r\navail: %d\r\npool_start: 0x%p\r\npool_end: 0x%p\r\n",
+           ucHeap, xTotalHeapSize, xFreeBytesRemaining, pucAlignedHeap, pxEnd);
+
+    printf("state,block_addr,user_addr,caller,blocksize,wanted_size\r\n");
+ 
+    while (pxLink != pxEnd)
+    {
+		
+        printf("%s, 0x%p, 0x%p, 0x%p,%d,%d\r\n", ((pxLink->xBlockSize & heapBLOCK_ALLOCATED_BITMASK)!=0)? "U":"F", pxLink, (uint8_t *)pxLink+xHeapStructSize, pxLink->caller, (( pxLink->xBlockSize ) & ~heapBLOCK_ALLOCATED_BITMASK), pxLink->xWantedSize);
+        pxLink =(BlockLink_t *) (( uint8_t * )pxLink + (( pxLink->xBlockSize ) & ~heapBLOCK_ALLOCATED_BITMASK));
+    }
+
+    xTaskResumeAll();
+}
+
+
 /************** wrap C library functions **************/
 void * __wrap_malloc (size_t size)
 {
-	return pvPortMalloc(size);
+    void *caller = __builtin_return_address (0);
+	return pvPortMalloc(size, caller);
 }
 
 void * __wrap__malloc_r (void *p, size_t size)
 {
-	
-	return pvPortMalloc(size);
+	void *caller = __builtin_return_address (0);
+	return pvPortMalloc(size, caller);
 }
 
 void __wrap_free (void *pv)
@@ -623,8 +695,8 @@ void __wrap_free (void *pv)
 void * __wrap_calloc (size_t a, size_t b)
 {
 	void *pvReturn;
-
-    pvReturn = pvPortMalloc( a*b );
+    void *caller = __builtin_return_address (0);
+    pvReturn = pvPortMalloc( a*b, caller);
     if (pvReturn)
     {
         memset(pvReturn, 0, a*b);
@@ -635,7 +707,8 @@ void * __wrap_calloc (size_t a, size_t b)
 
 void * __wrap_realloc (void* pv, size_t size)
 {
-	return pvPortRealloc(pv, size);
+    void *caller = __builtin_return_address (0);
+	return pvPortRealloc(pv, size, caller);
 }
 
 void __wrap__free_r (void *p, void *x)
@@ -645,7 +718,8 @@ void __wrap__free_r (void *p, void *x)
 
 void* __wrap__realloc_r (void *p, void* x, size_t sz)
 {
-  return __wrap_realloc (x, sz);
+    void *caller = __builtin_return_address (0);
+	return pvPortRealloc(x, sz, caller);
 }
 
 /*-----------------------------------------------------------*/

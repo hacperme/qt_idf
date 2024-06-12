@@ -626,6 +626,13 @@ void shell_aes_test_cmd(int argc, char *argv)
 	ql_aes_cbc_decrypt(key, key_bits, dst, strlen((const char *)dst), (unsigned char *)iv, plaintext, AES_CBC_BASE64);
 }
 
+void shell_heapinfo_cmd(int argc, char *argv)
+{
+
+	show_heap_info();
+
+}
+
 #ifdef NR_SHELL_USING_EXPORT_CMD
 NR_SHELL_CMD_EXPORT(test, shell_test_cmd);
 #else
@@ -642,6 +649,7 @@ const static_cmd_st static_cmd[] =
 		{"tlstest", shell_tlstest_cmd,"tls test command"},
 		{"duktest", shell_duktape_test_cmd,"duktape test command"},
 		{"aestest", shell_aes_test_cmd,"aes test command"},
+		{"heapinfo", shell_heapinfo_cmd,"heap info command"},
 		{"\0", NULL, NULL}};
 #endif
 

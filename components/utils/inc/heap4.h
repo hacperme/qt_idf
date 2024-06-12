@@ -92,11 +92,11 @@ void vPortGetHeapStats( HeapStats_t * pxHeapStats );
 /*
  * Map to the memory management routines required for the port.
  */
-void * pvPortMalloc( size_t xSize ) PRIVILEGED_FUNCTION;
+void * pvPortMalloc( size_t xSize , void *caller) PRIVILEGED_FUNCTION;
 void * pvPortCalloc( size_t xNum,
                      size_t xSize ) PRIVILEGED_FUNCTION;
 void * pvPortRealloc( void *p,
-                     size_t xSize ) PRIVILEGED_FUNCTION;
+                     size_t xSize, void *caller) PRIVILEGED_FUNCTION;
 void vPortFree( void * pv ) PRIVILEGED_FUNCTION;
 #endif
 
@@ -127,5 +127,6 @@ size_t xPortGetMinimumEverFreeHeapSize( void ) PRIVILEGED_FUNCTION;
     void vApplicationMallocFailedHook( void ); /*lint !e526 Symbol not defined as it is an application callback. */
 #endif
 
+void show_heap_info(void);
 
 #endif // __HEAP_4_H__
